@@ -1,0 +1,18 @@
+# Java build output
+*.class
+classes/
+build/
+target/
+out/
+
+# Generated experiment output
+*.csv
+
+# IDE metadata
+.vscode/
+.idea/
+*.iml
+
+# Local tooling files
+.DS_Store
+Thumbs.db
