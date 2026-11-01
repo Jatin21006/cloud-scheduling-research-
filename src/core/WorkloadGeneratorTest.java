@@ -50,12 +50,47 @@ public class WorkloadGeneratorTest {
 			}
 		}
 
+		// Verify generateWorkload and toTasks
+		List<WorkloadTask> normalGen = generator.generateWorkload(WorkloadGenerator.WorkloadType.NORMAL, 50, 123L);
+		if (normalGen.size() != 50) {
+			throw new AssertionError("Expected 50 normal workload tasks");
+		}
+		for (WorkloadTask wt : normalGen) {
+			if (wt.isDdosAttack() || wt.getLengthMi() != 300) {
+				throw new AssertionError("Normal workload task should not be an attack");
+			}
+		}
+
+		List<WorkloadTask> ddosGen = generator.generateWorkload(WorkloadGenerator.WorkloadType.DDOS, 50, 123L);
+		if (ddosGen.size() != 50) {
+			throw new AssertionError("Expected 50 DDoS workload tasks");
+		}
+		int attackCount = 0;
+		for (WorkloadTask wt : ddosGen) {
+			if (wt.isDdosAttack()) {
+				attackCount++;
+				if (wt.getLengthMi() != 30000 || wt.getInputSizeMb() != 3000) {
+					throw new AssertionError("DDoS attack task parameters incorrect");
+				}
+			}
+		}
+		if (attackCount != 5) {
+			throw new AssertionError("Expected exactly 5 attack tasks (10% of 50), found: " + attackCount);
+		}
+
+		List<Task> convertedTasks = generator.toTasks(ddosGen);
+		if (convertedTasks.size() != 50) {
+			throw new AssertionError("Converted tasks size mismatch");
+		}
+
 		System.out.println("Normal 50-task workload: PASS");
 		System.out.println("Normal 100-task workload: PASS");
 		System.out.println("All normal tasks are 300 MI: PASS");
 		System.out.println("Explicit DDoS task is 30000 MI and 3000 MB input/output: PASS");
 		System.out.println("Repeated configuration is deterministic: PASS");
 		System.out.println("Six Table 3 scenarios match exactly: PASS");
+		System.out.println("WorkloadType enum and generateWorkload: PASS");
+		System.out.println("WorkloadTask to Task conversion: PASS");
 	}
 
 	private static void assertTaskCountAndLength(List<Task> tasks, int expectedCount) {

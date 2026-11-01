@@ -30,6 +30,9 @@ public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
         FitnessEvaluator evaluator = new FitnessEvaluator(vmCount);
 
         int taskCount = tasks.size();
+        if (taskCount == 0) {
+            return new Schedule(0);
+        }
 
         // Each chromosome stores one VM assignment per task.
         int[][] population = new int[POPULATION_SIZE][taskCount];

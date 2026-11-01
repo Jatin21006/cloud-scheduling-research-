@@ -1,8 +1,10 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 public class WorkloadGenerator {
@@ -10,6 +12,12 @@ public class WorkloadGenerator {
 	public static final long NORMAL_FILE_SIZE_MB = 300;
 	public static final long DDOS_TASK_LENGTH_MI = NORMAL_TASK_LENGTH_MI * 100;
 	public static final long DDOS_FILE_SIZE_MB = 3000;
+	public static final double DEFAULT_DDOS_ATTACK_RATIO = 0.10;
+
+	public enum WorkloadType {
+		NORMAL,
+		DDOS
+	}
 
 	public List<Task> generateNormalTasks(int taskCount) {
 		if (taskCount != 50 && taskCount != 100) {
@@ -65,6 +73,57 @@ public class WorkloadGenerator {
 				throw new IllegalArgumentException("Task length must not be null");
 			}
 			tasks.add(new Task(taskId, lengthMi));
+		}
+		return tasks;
+	}
+
+	/**
+	 * Generates a full WorkloadTask list for the given workload type, task count, and seed.
+	 */
+	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed) {
+		if (type == null) {
+			throw new IllegalArgumentException("Workload type must not be null");
+		}
+		List<Task> base = generateNormalTasks(taskCount);
+		if (type == WorkloadType.NORMAL) {
+			List<WorkloadTask> normalWorkload = new ArrayList<WorkloadTask>();
+			for (Task t : base) {
+				normalWorkload.add(new WorkloadTask(
+						t.getId(),
+						t.getLengthMi(),
+						NORMAL_FILE_SIZE_MB,
+						NORMAL_FILE_SIZE_MB,
+						false));
+			}
+			return normalWorkload;
+		} else {
+			int attackCount = (int) Math.round(taskCount * DEFAULT_DDOS_ATTACK_RATIO);
+			Random rng = new Random(seed);
+			List<Integer> allIds = new ArrayList<Integer>();
+			for (int i = 0; i < taskCount; i++) {
+				allIds.add(i);
+			}
+			for (int i = taskCount - 1; i > 0; i--) {
+				int j = rng.nextInt(i + 1);
+				int temp = allIds.get(i);
+				allIds.set(i, allIds.get(j));
+				allIds.set(j, temp);
+			}
+			Set<Integer> attackIds = new HashSet<Integer>(allIds.subList(0, attackCount));
+			return generateDdosWorkload(base, attackIds);
+		}
+	}
+
+	/**
+	 * Converts WorkloadTask objects to standard Task instances for scheduling algorithms.
+	 */
+	public List<Task> toTasks(List<WorkloadTask> workloadTasks) {
+		if (workloadTasks == null) {
+			throw new IllegalArgumentException("Workload tasks must not be null");
+		}
+		List<Task> tasks = new ArrayList<Task>();
+		for (WorkloadTask wt : workloadTasks) {
+			tasks.add(new Task(wt.getId(), wt.getLengthMi()));
 		}
 		return tasks;
 	}

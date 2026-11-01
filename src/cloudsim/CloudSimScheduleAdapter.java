@@ -7,12 +7,14 @@ import java.util.List;
 
 import core.Schedule;
 import core.Task;
+import core.WorkloadTask;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.DatacenterBroker;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
 import org.cloudbus.cloudsim.Host;
+import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Pe;
 import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.UtilizationModel;
@@ -33,8 +35,46 @@ public class CloudSimScheduleAdapter {
 	private static final long CLOUDLET_FILE_SIZE_MB = 300;
 	private static final long CLOUDLET_OUTPUT_SIZE_MB = 300;
 
+	private boolean verbose = true;
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+
 	public Result execute(List<Task> tasks, Schedule schedule, int vmCount) throws Exception {
 		validateInputs(tasks, schedule, vmCount);
+		List<WorkloadTask> workload = new ArrayList<WorkloadTask>();
+		for (Task task : tasks) {
+			workload.add(new WorkloadTask(
+					task.getId(),
+					task.getLengthMi(),
+					CLOUDLET_FILE_SIZE_MB,
+					CLOUDLET_OUTPUT_SIZE_MB,
+					false));
+		}
+		return executeWorkload(workload, schedule, vmCount);
+	}
+
+	public Result executeWorkload(List<WorkloadTask> workload, Schedule schedule, int vmCount) throws Exception {
+		if (workload == null || schedule == null || vmCount <= 0) {
+			throw new IllegalArgumentException("Tasks, schedule, and VM count must be valid");
+		}
+		if (workload.size() != schedule.getTaskCount()) {
+			throw new IllegalArgumentException("Every task must have a schedule entry");
+		}
+		for (WorkloadTask task : workload) {
+			int vmId = schedule.getVmId(task.getId());
+			if (vmId < 0 || vmId >= vmCount) {
+				throw new IllegalArgumentException("Schedule contains an invalid VM assignment");
+			}
+		}
+
+		if (!verbose) {
+			Log.disable();
+		} else {
+			Log.enable();
+		}
+
 		CloudSim.init(1, Calendar.getInstance(), false);
 
 		createDatacenter(vmCount);
@@ -44,13 +84,13 @@ public class CloudSimScheduleAdapter {
 
 		UtilizationModel utilizationModel = new UtilizationModelFull();
 		List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
-		for (Task task : tasks) {
+		for (WorkloadTask task : workload) {
 			Cloudlet cloudlet = new Cloudlet(
 					task.getId(),
 					task.getLengthMi(),
 					1,
-					CLOUDLET_FILE_SIZE_MB,
-					CLOUDLET_OUTPUT_SIZE_MB,
+					task.getInputSizeMb(),
+					task.getOutputSizeMb(),
 					utilizationModel,
 					utilizationModel,
 					utilizationModel);
@@ -58,7 +98,7 @@ public class CloudSimScheduleAdapter {
 			cloudlets.add(cloudlet);
 		}
 		broker.submitCloudletList(cloudlets);
-		for (Task task : tasks) {
+		for (WorkloadTask task : workload) {
 			broker.bindCloudletToVm(task.getId(), schedule.getVmId(task.getId()));
 		}
 
