@@ -5,8 +5,11 @@ build/
 target/
 out/
 
-# Generated experiment output
+# Generated experiment output - allow tracked experiment results
 *.csv
+!results/raw/*.csv
+!results/summary/*.csv
+!results/*.csv
 
 # IDE metadata
 .vscode/

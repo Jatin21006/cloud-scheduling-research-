@@ -112,47 +112,39 @@ public class HybridGaPsoScheduler implements SchedulingAlgorithm {
                 }
             }
 
-            // Step 2: GA Crossover & Mutation phase across the swarm to prevent premature convergence
+            // Step 2: GA Crossover & Mutation phase with greedy acceptance to escape local optima
+            // without corrupting particle trajectory or accepting worse offspring.
             if (taskCount > 1) {
-                int[][] nextPositions = new int[SWARM_SIZE][taskCount];
-                // Preserve global best in slot 0
-                nextPositions[0] = globalBest.clone();
-
-                int nextIdx = 1;
-                while (nextIdx < SWARM_SIZE) {
+                for (int p = 1; p < SWARM_SIZE; p++) {
                     int p1 = tournamentSelect(currentFitness, random);
                     int p2 = tournamentSelect(currentFitness, random);
 
-                    int[] child1 = positions[p1].clone();
-                    int[] child2 = positions[p2].clone();
+                    int[] child = positions[p1].clone();
 
                     if (random.nextDouble() < CROSSOVER_PROBABILITY) {
                         int point = 1 + random.nextInt(taskCount - 1);
                         for (int t = point; t < taskCount; t++) {
-                            child1[t] = positions[p2][t];
-                            child2[t] = positions[p1][t];
+                            child[t] = positions[p2][t];
                         }
                     }
 
-                    mutate(child1, vmCount, random);
-                    mutate(child2, vmCount, random);
+                    mutate(child, vmCount, random);
 
-                    nextPositions[nextIdx++] = child1;
-                    if (nextIdx < SWARM_SIZE) {
-                        nextPositions[nextIdx++] = child2;
-                    }
-                }
+                    double childFitness = evaluate(tasks, child, evaluator);
 
-                // Evaluate offspring and update swarm positions
-                for (int p = 0; p < SWARM_SIZE; p++) {
-                    positions[p] = nextPositions[p];
-                    currentFitness[p] = evaluate(tasks, positions[p], evaluator);
-                    if (currentFitness[p] < personalBestFitness[p]) {
-                        personalBest[p] = positions[p].clone();
-                        personalBestFitness[p] = currentFitness[p];
-                        if (currentFitness[p] < globalBestFitness) {
-                            globalBestFitness = currentFitness[p];
-                            globalBest = personalBest[p].clone();
+                    // Greedy acceptance: only accept offspring if it improves or equals current particle fitness
+                    if (childFitness <= currentFitness[p]) {
+                        positions[p] = child;
+                        currentFitness[p] = childFitness;
+
+                        if (childFitness < personalBestFitness[p]) {
+                            personalBest[p] = child.clone();
+                            personalBestFitness[p] = childFitness;
+
+                            if (childFitness < globalBestFitness) {
+                                globalBestFitness = childFitness;
+                                globalBest = personalBest[p].clone();
+                            }
                         }
                     }
                 }

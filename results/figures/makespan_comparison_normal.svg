@@ -33,57 +33,57 @@
 <line x1="70" y1="370" x2="810" y2="370" class="axis" />
 <line x1="70" y1="60" x2="70" y2="370" class="axis" />
 <text x="131.66666666666666" y="392" class="label" text-anchor="middle" font-weight="600">S1 (T:50, I:10)</text>
-<rect x="85.4" y="241.6" width="21.1" height="128.4" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="96.0" y="237.6" class="val-text">3.00</text>
-<rect x="108.5" y="230.1" width="21.1" height="139.9" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="119.1" y="226.1" class="val-text">3.27</text>
-<rect x="131.7" y="240.4" width="21.1" height="129.6" fill="#059669" rx="2" opacity="0.9" />
-<text x="142.2" y="236.4" class="val-text">3.03</text>
-<rect x="154.8" y="230.1" width="21.1" height="139.9" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="165.4" y="226.1" class="val-text">3.27</text>
+<rect x="85.4" y="241.0" width="21.1" height="129.0" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="96.0" y="237.0" class="val-text">3.00</text>
+<rect x="108.5" y="229.4" width="21.1" height="140.6" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="119.1" y="225.4" class="val-text">3.27</text>
+<rect x="131.7" y="239.7" width="21.1" height="130.3" fill="#059669" rx="2" opacity="0.9" />
+<text x="142.2" y="235.7" class="val-text">3.03</text>
+<rect x="154.8" y="233.3" width="21.1" height="136.7" fill="#7C3AED" rx="2" opacity="0.9" />
+<text x="165.4" y="229.3" class="val-text">3.18</text>
 <text x="254.99999999999997" y="392" class="label" text-anchor="middle" font-weight="600">S2 (T:100, I:10)</text>
-<rect x="208.7" y="112.0" width="21.1" height="258.0" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="219.3" y="108.0" class="val-text">6.03</text>
-<rect x="231.9" y="101.7" width="21.1" height="268.3" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="242.4" y="97.7" class="val-text">6.27</text>
-<rect x="255.0" y="106.9" width="21.1" height="263.1" fill="#059669" rx="2" opacity="0.9" />
-<text x="265.6" y="102.9" class="val-text">6.15</text>
+<rect x="208.7" y="110.8" width="21.1" height="259.2" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="219.3" y="106.8" class="val-text">6.03</text>
+<rect x="231.9" y="100.4" width="21.1" height="269.6" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="242.4" y="96.4" class="val-text">6.27</text>
+<rect x="255.0" y="105.6" width="21.1" height="264.4" fill="#059669" rx="2" opacity="0.9" />
+<text x="265.6" y="101.6" class="val-text">6.15</text>
 <rect x="278.1" y="100.4" width="21.1" height="269.6" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="288.7" y="96.4" class="val-text">6.30</text>
+<text x="288.7" y="96.4" class="val-text">6.27</text>
 <text x="378.3333333333333" y="392" class="label" text-anchor="middle" font-weight="600">S3 (T:50, I:50)</text>
-<rect x="332.1" y="241.6" width="21.1" height="128.4" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="342.6" y="237.6" class="val-text">3.00</text>
-<rect x="355.2" y="236.5" width="21.1" height="133.5" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="365.8" y="232.5" class="val-text">3.12</text>
-<rect x="378.3" y="241.6" width="21.1" height="128.4" fill="#059669" rx="2" opacity="0.9" />
-<text x="388.9" y="237.6" class="val-text">3.00</text>
-<rect x="401.5" y="232.7" width="21.1" height="137.3" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="412.0" y="228.7" class="val-text">3.21</text>
+<rect x="332.1" y="241.0" width="21.1" height="129.0" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="342.6" y="237.0" class="val-text">3.00</text>
+<rect x="355.2" y="235.9" width="21.1" height="134.1" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="365.8" y="231.9" class="val-text">3.12</text>
+<rect x="378.3" y="241.0" width="21.1" height="129.0" fill="#059669" rx="2" opacity="0.9" />
+<text x="388.9" y="237.0" class="val-text">3.00</text>
+<rect x="401.5" y="235.9" width="21.1" height="134.1" fill="#7C3AED" rx="2" opacity="0.9" />
+<text x="412.0" y="231.9" class="val-text">3.12</text>
 <text x="501.6666666666667" y="392" class="label" text-anchor="middle" font-weight="600">S4 (T:100, I:50)</text>
-<rect x="455.4" y="113.3" width="21.1" height="256.7" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="466.0" y="109.3" class="val-text">6.00</text>
-<rect x="478.5" y="103.0" width="21.1" height="267.0" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="489.1" y="99.0" class="val-text">6.24</text>
-<rect x="501.7" y="113.3" width="21.1" height="256.7" fill="#059669" rx="2" opacity="0.9" />
-<text x="512.2" y="109.3" class="val-text">6.00</text>
-<rect x="524.8" y="105.6" width="21.1" height="264.4" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="535.4" y="101.6" class="val-text">6.18</text>
+<rect x="455.4" y="112.0" width="21.1" height="258.0" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="466.0" y="108.0" class="val-text">6.00</text>
+<rect x="478.5" y="101.7" width="21.1" height="268.3" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="489.1" y="97.7" class="val-text">6.24</text>
+<rect x="501.7" y="112.0" width="21.1" height="258.0" fill="#059669" rx="2" opacity="0.9" />
+<text x="512.2" y="108.0" class="val-text">6.00</text>
+<rect x="524.8" y="101.7" width="21.1" height="268.3" fill="#7C3AED" rx="2" opacity="0.9" />
+<text x="535.4" y="97.7" class="val-text">6.24</text>
 <text x="624.9999999999999" y="392" class="label" text-anchor="middle" font-weight="600">S5 (T:50, I:100)</text>
-<rect x="578.7" y="241.6" width="21.1" height="128.4" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="589.3" y="237.6" class="val-text">3.00</text>
-<rect x="601.9" y="240.4" width="21.1" height="129.6" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="612.4" y="236.4" class="val-text">3.03</text>
-<rect x="625.0" y="241.6" width="21.1" height="128.4" fill="#059669" rx="2" opacity="0.9" />
-<text x="635.6" y="237.6" class="val-text">3.00</text>
-<rect x="648.1" y="233.9" width="21.1" height="136.1" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="658.7" y="229.9" class="val-text">3.18</text>
+<rect x="578.7" y="241.0" width="21.1" height="129.0" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="589.3" y="237.0" class="val-text">3.00</text>
+<rect x="601.9" y="239.7" width="21.1" height="130.3" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="612.4" y="235.7" class="val-text">3.03</text>
+<rect x="625.0" y="241.0" width="21.1" height="129.0" fill="#059669" rx="2" opacity="0.9" />
+<text x="635.6" y="237.0" class="val-text">3.00</text>
+<rect x="648.1" y="237.2" width="21.1" height="132.8" fill="#7C3AED" rx="2" opacity="0.9" />
+<text x="658.7" y="233.2" class="val-text">3.09</text>
 <text x="748.3333333333333" y="392" class="label" text-anchor="middle" font-weight="600">S6 (T:100, I:100)</text>
-<rect x="702.1" y="113.3" width="21.1" height="256.7" fill="#2563EB" rx="2" opacity="0.9" />
-<text x="712.6" y="109.3" class="val-text">6.00</text>
-<rect x="725.2" y="103.0" width="21.1" height="267.0" fill="#DC2626" rx="2" opacity="0.9" />
-<text x="735.8" y="99.0" class="val-text">6.24</text>
-<rect x="748.3" y="113.3" width="21.1" height="256.7" fill="#059669" rx="2" opacity="0.9" />
-<text x="758.9" y="109.3" class="val-text">6.00</text>
+<rect x="702.1" y="112.0" width="21.1" height="258.0" fill="#2563EB" rx="2" opacity="0.9" />
+<text x="712.6" y="108.0" class="val-text">6.00</text>
+<rect x="725.2" y="101.7" width="21.1" height="268.3" fill="#DC2626" rx="2" opacity="0.9" />
+<text x="735.8" y="97.7" class="val-text">6.24</text>
+<rect x="748.3" y="112.0" width="21.1" height="258.0" fill="#059669" rx="2" opacity="0.9" />
+<text x="758.9" y="108.0" class="val-text">6.00</text>
 <rect x="771.5" y="105.6" width="21.1" height="264.4" fill="#7C3AED" rx="2" opacity="0.9" />
-<text x="782.0" y="101.6" class="val-text">6.18</text>
+<text x="782.0" y="101.6" class="val-text">6.15</text>
 </svg>

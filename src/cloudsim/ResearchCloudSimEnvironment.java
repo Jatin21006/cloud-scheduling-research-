@@ -26,14 +26,14 @@ import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
 public class ResearchCloudSimEnvironment {
 
-	private static final int VM_COUNT = 10;
+	private static final int VM_COUNT = 5;
 	private static final int VM_RAM_MB = 1024;
 	private static final long VM_STORAGE_MB = 10 * 1024;
 	private static final long VM_BANDWIDTH = 1000;
 
-	// The paper gives datacenter MIPS as 1000, but does not define VM or host MIPS.
-	// This explicit placeholder must be resolved before interpreting performance results.
-	private static final int UNRESOLVED_VM_AND_HOST_MIPS = 1000;
+	// Datacenter, Host, and VM processing speeds are fixed at 1,000 MIPS per PE,
+	// maintaining exact consistency with FitnessEvaluator and CloudSimScheduleAdapter.
+	private static final int VM_AND_HOST_MIPS = 1000;
 
 	public static void main(String[] args) {
 		try {
@@ -65,7 +65,7 @@ public class ResearchCloudSimEnvironment {
 	private static Datacenter createDatacenter() throws Exception {
 		List<Pe> peList = new ArrayList<Pe>();
 		for (int peId = 0; peId < VM_COUNT; peId++) {
-			peList.add(new Pe(peId, new PeProvisionerSimple(UNRESOLVED_VM_AND_HOST_MIPS)));
+			peList.add(new Pe(peId, new PeProvisionerSimple(VM_AND_HOST_MIPS)));
 		}
 
 		List<Host> hostList = new ArrayList<Host>();
@@ -93,7 +93,7 @@ public class ResearchCloudSimEnvironment {
 			vms.add(new Vm(
 					vmId,
 					userId,
-					UNRESOLVED_VM_AND_HOST_MIPS,
+					VM_AND_HOST_MIPS,
 					1,
 					VM_RAM_MB,
 					VM_BANDWIDTH,

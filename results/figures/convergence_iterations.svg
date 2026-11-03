@@ -52,10 +52,10 @@
 <circle cx="172.0" cy="324.6666666666667" r="4.5" fill="#059669" />
 <circle cx="410.0" cy="326.6666666666667" r="4.5" fill="#059669" />
 <circle cx="648.0" cy="326.6666666666667" r="4.5" fill="#059669" />
-<polyline points="172.0,308.6666666666667 410.0,312.6666666666667 648.0,314.66666666666663" fill="none" stroke="#7C3AED" stroke-width="2.5"  opacity="0.85" />
-<circle cx="172.0" cy="308.6666666666667" r="4.5" fill="#7C3AED" />
-<circle cx="410.0" cy="312.6666666666667" r="4.5" fill="#7C3AED" />
-<circle cx="648.0" cy="314.66666666666663" r="4.5" fill="#7C3AED" />
+<polyline points="172.0,314.66666666666663 410.0,318.66666666666663 648.0,320.6666666666667" fill="none" stroke="#7C3AED" stroke-width="2.5"  opacity="0.85" />
+<circle cx="172.0" cy="314.66666666666663" r="4.5" fill="#7C3AED" />
+<circle cx="410.0" cy="318.66666666666663" r="4.5" fill="#7C3AED" />
+<circle cx="648.0" cy="320.6666666666667" r="4.5" fill="#7C3AED" />
 <polyline points="172.0,124.66666666666666 410.0,126.66666666666666 648.0,126.66666666666666" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
 <circle cx="172.0" cy="124.66666666666666" r="4.5" fill="#2563EB" />
 <circle cx="410.0" cy="126.66666666666666" r="4.5" fill="#2563EB" />
@@ -68,10 +68,10 @@
 <circle cx="172.0" cy="116.66666666666663" r="4.5" fill="#059669" />
 <circle cx="410.0" cy="126.66666666666666" r="4.5" fill="#059669" />
 <circle cx="648.0" cy="126.66666666666666" r="4.5" fill="#059669" />
-<polyline points="172.0,106.66666666666666 410.0,114.66666666666669 648.0,114.66666666666669" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
-<circle cx="172.0" cy="106.66666666666666" r="4.5" fill="#7C3AED" />
-<circle cx="410.0" cy="114.66666666666669" r="4.5" fill="#7C3AED" />
-<circle cx="648.0" cy="114.66666666666669" r="4.5" fill="#7C3AED" />
+<polyline points="172.0,108.66666666666669 410.0,110.66666666666666 648.0,116.66666666666663" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
+<circle cx="172.0" cy="108.66666666666669" r="4.5" fill="#7C3AED" />
+<circle cx="410.0" cy="110.66666666666666" r="4.5" fill="#7C3AED" />
+<circle cx="648.0" cy="116.66666666666663" r="4.5" fill="#7C3AED" />
 <text x="90" y="85" class="label" font-weight="600">— Solid: 50 Tasks (Ideal: 3.0s)</text>
 <text x="90" y="102" class="label" font-weight="600">--- Dashed: 100 Tasks (Ideal: 6.0s)</text>
 </svg>
