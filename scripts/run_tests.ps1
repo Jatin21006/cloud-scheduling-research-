@@ -61,6 +61,7 @@ $testSuites = @(
     "core.HybridGaPsoSchedulerTest",
     "core.SimulatedAnnealingHybridGaPsoSchedulerTest",
     "core.OblHybridGaPsoSchedulerTest",
+    "core.MemeticHybridGaPsoSchedulerTest",
     "cloudsim.CloudSimScheduleAdapterTest",
     "core.EndToEndIntegrationTest"
 )

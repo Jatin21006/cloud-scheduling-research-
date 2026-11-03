@@ -173,6 +173,9 @@ public class UnifiedExperimentRunner {
         if ("ALL-EXTENDED".equals(filterAlgorithm) || "OBL-HYBRID".equals(filterAlgorithm) || "OBL-HYBRID-GA-PSO".equals(filterAlgorithm) || "OBL_HYBRID".equals(filterAlgorithm)) {
             algorithms.put("OBL-Hybrid-GA-PSO", new OblHybridGaPsoScheduler());
         }
+        if ("ALL-EXTENDED".equals(filterAlgorithm) || "MEMETIC-HYBRID".equals(filterAlgorithm) || "MEMETIC-HYBRID-GA-PSO".equals(filterAlgorithm) || "MEMETIC_HYBRID".equals(filterAlgorithm)) {
+            algorithms.put("Memetic-Hybrid-GA-PSO", new MemeticHybridGaPsoScheduler());
+        }
 
         List<WorkloadGenerator.WorkloadType> workloadTypes = new ArrayList<WorkloadGenerator.WorkloadType>();
         if ("ALL".equals(filterWorkload) || "NORMAL".equals(filterWorkload)) {
