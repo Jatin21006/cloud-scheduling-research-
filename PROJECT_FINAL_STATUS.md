@@ -26,8 +26,15 @@ The Cloud Computing Research Project has undergone a comprehensive academic cons
   - Submits cloudlets, binds broker to VM assignments, and executes simulation clock events.
   - 100% success rate across all 480 runs (`Cloudlet.SUCCESS`, 0 failed tasks).
   - Simulation clock makespan matches analytical makespan within **0.0359% mean relative error** (max 0.3175%).
-- [x] **Automated Regression Testing:**
-  - All 12 test suites passing (`scripts/run_tests.ps1`).
+- [x] **Four Research Extensions Implemented & Benchmarked:**
+  - Chaos-PSO (`ChaosParticleSwarmScheduler.java`): Logistic map dynamic inertia modulation.
+  - SA-Hybrid GA-PSO (`SimulatedAnnealingHybridGaPsoScheduler.java`): Metropolis uphill migrant acceptance.
+  - OBL-Hybrid GA-PSO (`OblHybridGaPsoScheduler.java`): Opposition-based learning diversity injection.
+  - Memetic Hybrid GA-PSO (`MemeticHybridGaPsoScheduler.java`): Discrete targeted bottleneck hill-climbing (+8.59% makespan improvement).
+- [x] **Final Comparative Benchmark & Deliverables:**
+  - `FinalComparativeExperimentRunner.java`: 600 controlled runs across 5 algorithms, 6 scenarios, Normal & DDoS workloads.
+  - All 16 automated test suites passing (`scripts/run_tests.ps1`).
+  - Unified CSV datasets, publication charts (`chart1` to `chart6`), and 21-slide presentation `FINAL_COMPARATIVE_RESULTS.pptx`.
 - [x] **Full 480-Run Benchmark Matrix (Table 3 Contract):**
   - 6 Scenarios $\times$ 2 Workloads (Normal, DDoS) $\times$ 10 Matched Trials (deterministic seeds $0\dots9$) $\times$ 4 Algorithms = 480 runs.
   - Raw individual run records stored in `results/raw/raw_experiment_results.csv` (481 lines, 100% complete).
