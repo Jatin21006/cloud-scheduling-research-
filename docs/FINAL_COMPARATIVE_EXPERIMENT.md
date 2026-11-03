@@ -77,5 +77,6 @@ All 5 algorithms were benchmarked across all 6 standardized scenarios (S1–S6) 
   - `results/final_comparison/figures/chart5_standard_deviation.png`
   - `results/final_comparison/figures/chart6_execution_time.png`
 - **PowerPoint Presentation Deck**:
-  - `FINAL_COMPARATIVE_RESULTS.pptx` (21 widescreen slides, professional dark/light palette, embedded charts, data tables, and defense narrative).
+  - `FINAL_COMPARATIVE_RESULTS_VERIFIED.pptx` (21 widescreen slides, audited mathematical formulas, verified implementation parameters, concise high-impact layout, and honest simulation framing).
+  - Also preserved as `FINAL_COMPARATIVE_RESULTS.pptx`.
 
