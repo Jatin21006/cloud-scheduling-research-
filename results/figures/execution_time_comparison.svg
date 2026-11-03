@@ -11,27 +11,27 @@
 <line x1="70" y1="320.0" x2="710" y2="320.0" class="grid" />
 <text x="60" y="324.0" class="label" text-anchor="end">0.0 ms</text>
 <line x1="70" y1="268.0" x2="710" y2="268.0" class="grid" />
-<text x="60" y="272.0" class="label" text-anchor="end">3.7 ms</text>
+<text x="60" y="272.0" class="label" text-anchor="end">3.5 ms</text>
 <line x1="70" y1="216.0" x2="710" y2="216.0" class="grid" />
-<text x="60" y="220.0" class="label" text-anchor="end">7.4 ms</text>
+<text x="60" y="220.0" class="label" text-anchor="end">7.0 ms</text>
 <line x1="70" y1="164.0" x2="710" y2="164.0" class="grid" />
-<text x="60" y="168.0" class="label" text-anchor="end">11.1 ms</text>
+<text x="60" y="168.0" class="label" text-anchor="end">10.4 ms</text>
 <line x1="70" y1="112.0" x2="710" y2="112.0" class="grid" />
-<text x="60" y="116.0" class="label" text-anchor="end">14.8 ms</text>
+<text x="60" y="116.0" class="label" text-anchor="end">13.9 ms</text>
 <line x1="70" y1="60.0" x2="710" y2="60.0" class="grid" />
-<text x="60" y="64.0" class="label" text-anchor="end">18.5 ms</text>
+<text x="60" y="64.0" class="label" text-anchor="end">17.4 ms</text>
 <line x1="70" y1="320" x2="710" y2="320" class="axis" />
 <line x1="70" y1="60" x2="70" y2="320" class="axis" />
-<rect x="106.0" y="217.0" width="88.0" height="103.0" fill="#2563EB" rx="4" />
-<text x="150.0" y="209.0" class="val-text">7.32 ms</text>
+<rect x="106.0" y="216.6" width="88.0" height="103.4" fill="#2563EB" rx="4" />
+<text x="150.0" y="208.6" class="val-text">6.91 ms</text>
 <text x="150.0" y="344" class="label" text-anchor="middle" font-weight="700">GA</text>
 <rect x="266.0" y="112.0" width="88.0" height="208.0" fill="#DC2626" rx="4" />
-<text x="310.0" y="104.0" class="val-text">14.77 ms</text>
+<text x="310.0" y="104.0" class="val-text">13.90 ms</text>
 <text x="310.0" y="344" class="label" text-anchor="middle" font-weight="700">PSO</text>
-<rect x="426.0" y="254.5" width="88.0" height="65.5" fill="#059669" rx="4" />
-<text x="470.0" y="246.5" class="val-text">4.65 ms</text>
+<rect x="426.0" y="255.5" width="88.0" height="64.5" fill="#059669" rx="4" />
+<text x="470.0" y="247.5" class="val-text">4.31 ms</text>
 <text x="470.0" y="344" class="label" text-anchor="middle" font-weight="700">ABC</text>
-<rect x="586.0" y="159.5" width="88.0" height="160.5" fill="#7C3AED" rx="4" />
-<text x="630.0" y="151.5" class="val-text">11.40 ms</text>
+<rect x="586.0" y="157.5" width="88.0" height="162.5" fill="#7C3AED" rx="4" />
+<text x="630.0" y="149.5" class="val-text">10.86 ms</text>
 <text x="630.0" y="344" class="label" text-anchor="middle" font-weight="700">Hybrid-GA-PSO</text>
 </svg>

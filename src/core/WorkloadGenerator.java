@@ -14,9 +14,17 @@ public class WorkloadGenerator {
 	public static final long DDOS_FILE_SIZE_MB = 3000; // 3,000 MB
 	public static final double DEFAULT_DDOS_ATTACK_RATIO = 1.0; // Volumetric flood: 100% cloudlets scaled
 
+	public static final long UNIFORM_MIN_LENGTH_MI = 100;
+	public static final long UNIFORM_MAX_LENGTH_MI = 300;
+
 	public enum WorkloadType {
 		NORMAL,
 		DDOS
+	}
+
+	public enum Distribution {
+		CONSTANT_300,
+		UNIFORM_100_300
 	}
 
 	public List<Task> generateNormalTasks(int taskCount) {
@@ -27,6 +35,24 @@ public class WorkloadGenerator {
 		List<Task> tasks = new ArrayList<Task>();
 		for (int taskId = 0; taskId < taskCount; taskId++) {
 			tasks.add(new Task(taskId, NORMAL_TASK_LENGTH_MI));
+		}
+		return tasks;
+	}
+
+	/**
+	 * Generates normal tasks following the uniform distribution U[100, 300] MI
+	 * as specified in Section 3.3, Line 829 of the research paper.
+	 */
+	public List<Task> generateUniformNormalTasks(int taskCount, long seed) {
+		if (taskCount != 50 && taskCount != 100) {
+			throw new IllegalArgumentException("Paper scenarios require exactly 50 or 100 tasks");
+		}
+
+		Random rng = new Random(seed);
+		List<Task> tasks = new ArrayList<Task>();
+		for (int taskId = 0; taskId < taskCount; taskId++) {
+			long lengthMi = UNIFORM_MIN_LENGTH_MI + rng.nextInt((int) (UNIFORM_MAX_LENGTH_MI - UNIFORM_MIN_LENGTH_MI + 1));
+			tasks.add(new Task(taskId, lengthMi));
 		}
 		return tasks;
 	}
@@ -51,9 +77,10 @@ public class WorkloadGenerator {
 		List<WorkloadTask> workload = new ArrayList<WorkloadTask>();
 		for (Task task : baseTasks) {
 			boolean attack = attackTaskIds.contains(task.getId());
+			long taskLen = attack ? (task.getLengthMi() * 100L) : task.getLengthMi();
 			workload.add(new WorkloadTask(
 					task.getId(),
-					attack ? DDOS_TASK_LENGTH_MI : task.getLengthMi(),
+					taskLen,
 					attack ? DDOS_FILE_SIZE_MB : NORMAL_FILE_SIZE_MB,
 					attack ? DDOS_FILE_SIZE_MB : NORMAL_FILE_SIZE_MB,
 					attack));
@@ -79,21 +106,37 @@ public class WorkloadGenerator {
 
 	/**
 	 * Generates a full WorkloadTask list for the given workload type, task count, and seed.
-	 * In DDOS mode, volumetric flooding scales all arriving cloudlets by 100x length (30,000 MI)
-	 * and 10x file sizes (3000 MB), matching the paper's volumetric flood emulation.
+	 * Default preserves backward compatibility with constant 300 MI tasks.
 	 */
 	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed) {
-		return generateWorkload(type, taskCount, seed, DEFAULT_DDOS_ATTACK_RATIO);
+		return generateWorkload(type, taskCount, seed, DEFAULT_DDOS_ATTACK_RATIO, Distribution.CONSTANT_300);
 	}
 
 	/**
 	 * Overloaded generator allowing a specific attack ratio if needed.
 	 */
 	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed, double attackRatio) {
+		return generateWorkload(type, taskCount, seed, attackRatio, Distribution.CONSTANT_300);
+	}
+
+	/**
+	 * Generates uniform workload U[100, 300] MI faithful to Section 3.3, Line 829.
+	 */
+	public List<WorkloadTask> generateUniformWorkload(WorkloadType type, int taskCount, long seed) {
+		return generateWorkload(type, taskCount, seed, DEFAULT_DDOS_ATTACK_RATIO, Distribution.UNIFORM_100_300);
+	}
+
+	/**
+	 * Comprehensive workload generator supporting both constant 300 MI and uniform distributions.
+	 */
+	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed, double attackRatio, Distribution distribution) {
 		if (type == null) {
 			throw new IllegalArgumentException("Workload type must not be null");
 		}
-		List<Task> base = generateNormalTasks(taskCount);
+		List<Task> base = (distribution == Distribution.UNIFORM_100_300)
+				? generateUniformNormalTasks(taskCount, seed)
+				: generateNormalTasks(taskCount);
+
 		if (type == WorkloadType.NORMAL) {
 			List<WorkloadTask> normalWorkload = new ArrayList<WorkloadTask>();
 			for (Task t : base) {

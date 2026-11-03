@@ -111,6 +111,7 @@ public class UnifiedExperimentRunner {
         boolean runCloudSim = true;
         int vmCount = DEFAULT_VM_COUNT;
         Path outputDir = Paths.get("results");
+        WorkloadGenerator.Distribution distribution = WorkloadGenerator.Distribution.UNIFORM_100_300;
 
         for (int i = 0; i < args.length; i++) {
             if ("--scenario".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
@@ -125,6 +126,13 @@ public class UnifiedExperimentRunner {
                 vmCount = Integer.parseInt(args[++i]);
             } else if ("--outputDir".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 outputDir = Paths.get(args[++i]);
+            } else if ("--distribution".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                String distStr = args[++i].toUpperCase();
+                if ("CONSTANT".equals(distStr) || "CONSTANT_300".equals(distStr)) {
+                    distribution = WorkloadGenerator.Distribution.CONSTANT_300;
+                } else {
+                    distribution = WorkloadGenerator.Distribution.UNIFORM_100_300;
+                }
             }
         }
 
@@ -134,23 +142,33 @@ public class UnifiedExperimentRunner {
         System.out.println("Scenario Filter   : " + (filterScenario == -1 ? "ALL" : filterScenario));
         System.out.println("Workload Filter   : " + filterWorkload);
         System.out.println("Algorithm Filter  : " + filterAlgorithm);
+        System.out.println("Distribution      : " + distribution.name());
         System.out.println("CloudSim Execution: " + runCloudSim);
         System.out.println("VM Count          : " + vmCount);
         System.out.println("Output Directory  : " + outputDir.toAbsolutePath());
         System.out.println("-------------------------------------------------");
 
         Map<String, SchedulingAlgorithm> algorithms = new LinkedHashMap<String, SchedulingAlgorithm>();
-        if ("ALL".equals(filterAlgorithm) || "GA".equals(filterAlgorithm)) {
+        if ("ALL".equals(filterAlgorithm) || "ALL-EXTENDED".equals(filterAlgorithm) || "GA".equals(filterAlgorithm)) {
             algorithms.put("GA", new GeneticAlgorithmScheduler());
         }
-        if ("ALL".equals(filterAlgorithm) || "PSO".equals(filterAlgorithm)) {
+        if ("ALL".equals(filterAlgorithm) || "ALL-EXTENDED".equals(filterAlgorithm) || "ALL-PSO".equals(filterAlgorithm) || "PSO".equals(filterAlgorithm)) {
             algorithms.put("PSO", new ParticleSwarmScheduler());
         }
-        if ("ALL".equals(filterAlgorithm) || "ABC".equals(filterAlgorithm)) {
+        if ("ALL-EXTENDED".equals(filterAlgorithm) || "ALL-PSO".equals(filterAlgorithm) || "LDIW".equals(filterAlgorithm) || "LDIW-PSO".equals(filterAlgorithm) || "LDIW_PSO".equals(filterAlgorithm)) {
+            algorithms.put("LDIW-PSO", new LdiwParticleSwarmScheduler());
+        }
+        if ("ALL-EXTENDED".equals(filterAlgorithm) || "ALL-PSO".equals(filterAlgorithm) || "CHAOS".equals(filterAlgorithm) || "CHAOS-PSO".equals(filterAlgorithm) || "CHAOS_PSO".equals(filterAlgorithm)) {
+            algorithms.put("Chaos-PSO", new ChaosParticleSwarmScheduler());
+        }
+        if ("ALL".equals(filterAlgorithm) || "ALL-EXTENDED".equals(filterAlgorithm) || "ABC".equals(filterAlgorithm)) {
             algorithms.put("ABC", new ArtificialBeeColonyScheduler());
         }
-        if ("ALL".equals(filterAlgorithm) || "HYBRID".equals(filterAlgorithm) || "HYBRID-GA-PSO".equals(filterAlgorithm)) {
+        if ("ALL".equals(filterAlgorithm) || "ALL-EXTENDED".equals(filterAlgorithm) || "HYBRID".equals(filterAlgorithm) || "HYBRID-GA-PSO".equals(filterAlgorithm)) {
             algorithms.put("Hybrid-GA-PSO", new HybridGaPsoScheduler());
+        }
+        if ("ALL-EXTENDED".equals(filterAlgorithm) || "SA-HYBRID".equals(filterAlgorithm) || "SA-HYBRID-GA-PSO".equals(filterAlgorithm) || "SA_HYBRID".equals(filterAlgorithm)) {
+            algorithms.put("SA-Hybrid-GA-PSO", new SimulatedAnnealingHybridGaPsoScheduler());
         }
 
         List<WorkloadGenerator.WorkloadType> workloadTypes = new ArrayList<WorkloadGenerator.WorkloadType>();
@@ -193,7 +211,7 @@ public class UnifiedExperimentRunner {
                     long seed = DEFAULT_BASE_SEED + trial;
 
                     // Generate the matched workload once for this (scenario, trial)
-                    List<WorkloadTask> workload = generator.generateWorkload(wlType, scenario.getTaskCount(), seed);
+                    List<WorkloadTask> workload = generator.generateWorkload(wlType, scenario.getTaskCount(), seed, WorkloadGenerator.DEFAULT_DDOS_ATTACK_RATIO, distribution);
                     List<Task> tasks = generator.toTasks(workload);
 
                     // Execute each algorithm on the identical workload

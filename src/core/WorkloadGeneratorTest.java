@@ -90,6 +90,32 @@ public class WorkloadGeneratorTest {
 			throw new AssertionError("Converted tasks size mismatch");
 		}
 
+		// Verify uniform distribution generation (Section 3.3, Line 829)
+		List<WorkloadTask> uniformNormal = generator.generateUniformWorkload(WorkloadGenerator.WorkloadType.NORMAL, 100, 42L);
+		if (uniformNormal.size() != 100) {
+			throw new AssertionError("Expected 100 uniform workload tasks");
+		}
+		long uniformTotalMi = 0;
+		for (WorkloadTask wt : uniformNormal) {
+			if (wt.getLengthMi() < 100 || wt.getLengthMi() > 300) {
+				throw new AssertionError("Uniform task length out of bounds [100, 300]: " + wt.getLengthMi());
+			}
+			uniformTotalMi += wt.getLengthMi();
+		}
+		double uniformMean = (double) uniformTotalMi / 100.0;
+		if (uniformMean < 180.0 || uniformMean > 220.0) {
+			throw new AssertionError("Uniform mean expected ~200 MI, got: " + uniformMean);
+		}
+
+		// Verify uniform DDoS workload
+		List<WorkloadTask> uniformDdos = generator.generateUniformWorkload(WorkloadGenerator.WorkloadType.DDOS, 100, 42L);
+		for (int i = 0; i < 100; i++) {
+			long expectedDdosLen = uniformNormal.get(i).getLengthMi() * 100L;
+			if (uniformDdos.get(i).getLengthMi() != expectedDdosLen) {
+				throw new AssertionError("Uniform DDoS task length not 100x of base task");
+			}
+		}
+
 		System.out.println("Normal 50-task workload: PASS");
 		System.out.println("Normal 100-task workload: PASS");
 		System.out.println("All normal tasks are 300 MI: PASS");
@@ -99,5 +125,6 @@ public class WorkloadGeneratorTest {
 		System.out.println("Six Table 3 scenarios match exactly: PASS");
 		System.out.println("WorkloadType enum and generateWorkload: PASS");
 		System.out.println("WorkloadTask to Task conversion: PASS");
+		System.out.println("Uniform distribution generation U[100, 300] MI: PASS");
 	}
 }

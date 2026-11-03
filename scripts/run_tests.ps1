@@ -1,5 +1,5 @@
-# Run Tests Script for Cloud Task Scheduling Research
-# Compatible with Windows PowerShell 5.1 and PowerShell Core
+# Test Suite Runner for Cloud Task Scheduling Research
+# Compiles all Java sources and executes all unit and integration test suites.
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -18,24 +18,23 @@ if (Test-Path "C:\Program Files\Java\jdk-21.0.12.1\bin\javac.exe") {
     $javac = "C:\Program Files\Java\jdk-21.0.12.1\bin\javac.exe"
     $java = "C:\Program Files\Java\jdk-21.0.12.1\bin\java.exe"
 }
-
 Write-Host "Using compiler: $javac"
 Write-Host "Using runtime : $java"
 
-# 2. Verify CloudSim Dependency
+# 2. Locate CloudSim JAR
 $cloudSimJar = Join-Path $RepoRoot "cloudsim-3.0.3\jars\cloudsim-3.0.3.jar"
 if (-not (Test-Path $cloudSimJar)) {
-    Write-Error "CloudSim JAR not found at $cloudSimJar"
+    Write-Error "CloudSim JAR not found at: $cloudSimJar"
     exit 1
 }
-Write-Host "Found CloudSim JAR: $cloudSimJar" -ForegroundColor Green
+Write-Host "Found CloudSim JAR: $cloudSimJar"
 
-# 3. Compilation
 $outDir = Join-Path $RepoRoot "out"
 if (-not (Test-Path $outDir)) {
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 }
 
+# 3. Compile all Java source files
 $sourceFiles = Get-ChildItem -Path (Join-Path $RepoRoot "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
 Write-Host "`n[1/3] Compiling $($sourceFiles.Count) Java source files..." -ForegroundColor Yellow
 
@@ -57,8 +56,10 @@ $testSuites = @(
     "core.GATest",
     "core.GeneticAlgorithmSchedulerTest",
     "core.ParticleSwarmSchedulerTest",
+    "core.ChaosParticleSwarmSchedulerTest",
     "core.ArtificialBeeColonySchedulerTest",
     "core.HybridGaPsoSchedulerTest",
+    "core.SimulatedAnnealingHybridGaPsoSchedulerTest",
     "cloudsim.CloudSimScheduleAdapterTest",
     "core.EndToEndIntegrationTest"
 )
