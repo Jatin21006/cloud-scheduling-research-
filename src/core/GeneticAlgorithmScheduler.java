@@ -1,13 +1,16 @@
 package core;
+
 import java.util.List;
 import java.util.Random;
 
 public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
 
-    private static final int POPULATION_SIZE = 75;
-    private static final int TOURNAMENT_SIZE = 5;
-    private static final double CROSSOVER_PROBABILITY = 0.5;
-    private static final double MUTATION_PROBABILITY = 0.015;
+    public static final int POPULATION_SIZE = 75;
+    public static final int TOURNAMENT_SIZE = 5;
+    public static final double CROSSOVER_PROBABILITY = 0.5;
+    public static final double MUTATION_PROBABILITY = 0.015;
+    public static final double STAGNATION_THRESHOLD = 0.5;
+    public static final int STAGNATION_COUNT = 15;
 
     @Override
     public Schedule solve(
@@ -46,13 +49,15 @@ public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
 
         int[] bestChromosome = null;
         double bestMakespan = Double.POSITIVE_INFINITY;
+        double lastBestMakespan = Double.POSITIVE_INFINITY;
+        int stagnationCounter = 0;
 
         // Run the genetic algorithm for the requested iterations.
         for (int generation = 0; generation < iterations; generation++) {
 
             double[] fitness = new double[POPULATION_SIZE];
 
-            // Evaluate every candidate using the existing makespan evaluator.
+            // Evaluate every candidate using the makespan evaluator.
             for (int i = 0; i < POPULATION_SIZE; i++) {
                 Schedule candidate = toSchedule(population[i]);
                 fitness[i] = evaluator.evaluate(tasks, candidate).getMakespan();
@@ -63,17 +68,28 @@ public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
                 }
             }
 
+            // Stagnation detection (Table 2: Threshold 0.5, Count 15)
+            if (Math.abs(lastBestMakespan - bestMakespan) < STAGNATION_THRESHOLD) {
+                stagnationCounter++;
+            } else {
+                stagnationCounter = 0;
+                lastBestMakespan = bestMakespan;
+            }
+
             // No need to create another generation after the final evaluation.
             if (generation == iterations - 1) {
                 break;
             }
 
-            int[][] nextPopulation =
-                    new int[POPULATION_SIZE][taskCount];
+            int[][] nextPopulation = new int[POPULATION_SIZE][taskCount];
 
             // Elitism: carry the best chromosome into the next generation.
             int eliteIndex = findBestIndex(fitness);
             nextPopulation[0] = population[eliteIndex].clone();
+
+            // If stagnant, boost mutation or re-randomize lowest portion to escape local optima
+            boolean isStagnant = stagnationCounter >= STAGNATION_COUNT;
+            double currentMutationRate = isStagnant ? (MUTATION_PROBABILITY * 3.0) : MUTATION_PROBABILITY;
 
             int nextIndex = 1;
 
@@ -90,30 +106,27 @@ public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
                 int[] child2 = parent2.clone();
 
                 // Apply one-point crossover with the configured probability.
-                if (taskCount > 1
-                        && random.nextDouble() < CROSSOVER_PROBABILITY) {
-
-                    int crossoverPoint = 1
-                            + random.nextInt(taskCount - 1);
-
-                    for (int gene = crossoverPoint;
-                            gene < taskCount;
-                            gene++) {
-
+                if (taskCount > 1 && random.nextDouble() < CROSSOVER_PROBABILITY) {
+                    int crossoverPoint = 1 + random.nextInt(taskCount - 1);
+                    for (int gene = crossoverPoint; gene < taskCount; gene++) {
                         child1[gene] = parent2[gene];
                         child2[gene] = parent1[gene];
                     }
                 }
 
                 // Mutate each gene independently.
-                mutate(child1, vmCount, random);
-                mutate(child2, vmCount, random);
+                mutate(child1, vmCount, random, currentMutationRate);
+                mutate(child2, vmCount, random, currentMutationRate);
 
                 nextPopulation[nextIndex++] = child1;
 
                 if (nextIndex < POPULATION_SIZE) {
                     nextPopulation[nextIndex++] = child2;
                 }
+            }
+
+            if (isStagnant) {
+                stagnationCounter = 0; // Reset after perturbation
             }
 
             population = nextPopulation;
@@ -124,54 +137,43 @@ public class GeneticAlgorithmScheduler implements SchedulingAlgorithm {
     }
 
     private int tournamentSelection(double[] fitness, Random random) {
-
         int bestIndex = random.nextInt(POPULATION_SIZE);
-
         for (int i = 1; i < TOURNAMENT_SIZE; i++) {
             int candidateIndex = random.nextInt(POPULATION_SIZE);
-
             if (fitness[candidateIndex] < fitness[bestIndex]) {
                 bestIndex = candidateIndex;
             }
         }
-
         return bestIndex;
     }
 
     private int findBestIndex(double[] fitness) {
-
         int bestIndex = 0;
-
         for (int i = 1; i < fitness.length; i++) {
             if (fitness[i] < fitness[bestIndex]) {
                 bestIndex = i;
             }
         }
-
         return bestIndex;
     }
 
     private void mutate(
             int[] chromosome,
             int vmCount,
-            Random random) {
-
+            Random random,
+            double mutationRate) {
         for (int gene = 0; gene < chromosome.length; gene++) {
-
-            if (random.nextDouble() < MUTATION_PROBABILITY) {
+            if (random.nextDouble() < mutationRate) {
                 chromosome[gene] = random.nextInt(vmCount);
             }
         }
     }
 
     private Schedule toSchedule(int[] chromosome) {
-
         Schedule schedule = new Schedule(chromosome.length);
-
         for (int taskId = 0; taskId < chromosome.length; taskId++) {
             schedule.assign(taskId, chromosome[taskId]);
         }
-
         return schedule;
     }
 }

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FitnessEvaluator {
-	public static final double VM_MIPS = 1000.0;
+	public static final double VM_MIPS = 100.0;
 
 	private final int vmCount;
 
@@ -34,7 +34,7 @@ public class FitnessEvaluator {
 				throw new IllegalArgumentException("Each task must have a valid VM assignment");
 			}
 
-			// ET(k,m) = MI(k) / MIPS(m), with VM MIPS fixed at 1000.
+			// ET(k,m) = MI(k) / MIPS(m), with VM MIPS fixed at 100.0 (1000 DC MIPS / 10 VMs)
 			vmTotalTimes[vmId] += task.getLengthMi() / VM_MIPS;
 		}
 
@@ -45,19 +45,29 @@ public class FitnessEvaluator {
 		}
 
 		double makespan = 0.0;
+		double sumExecutionTime = 0.0;
 		for (double totalTime : vmTotalTimes) {
 			makespan = Math.max(makespan, totalTime);
+			sumExecutionTime += totalTime;
 		}
-		return new Result(vmTotalTimes, makespan);
+
+		// Resource Utilization (%) = sum(VM time to life) / (Makespan * total VM number) * 100
+		double resourceUtilization = (makespan > 0.0 && vmCount > 0)
+				? (sumExecutionTime / (makespan * vmCount)) * 100.0
+				: 0.0;
+
+		return new Result(vmTotalTimes, makespan, resourceUtilization);
 	}
 
 	public static class Result {
 		private final double[] vmTotalTimes;
 		private final double makespan;
+		private final double resourceUtilization;
 
-		private Result(double[] vmTotalTimes, double makespan) {
+		private Result(double[] vmTotalTimes, double makespan, double resourceUtilization) {
 			this.vmTotalTimes = vmTotalTimes;
 			this.makespan = makespan;
+			this.resourceUtilization = resourceUtilization;
 		}
 
 		public double getVmTotalTime(int vmId) {
@@ -71,9 +81,14 @@ public class FitnessEvaluator {
 			return makespan;
 		}
 
+		public double getResourceUtilization() {
+			return resourceUtilization;
+		}
+
 		@Override
 		public String toString() {
-			return "VM totals=" + Arrays.toString(vmTotalTimes) + ", makespan=" + makespan;
+			return String.format("VM totals=%s, makespan=%.4f, resourceUtilization=%.2f%%",
+					Arrays.toString(vmTotalTimes), makespan, resourceUtilization);
 		}
 	}
 }

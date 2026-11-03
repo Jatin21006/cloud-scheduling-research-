@@ -11,14 +11,15 @@ import java.util.Random;
  * 2. Onlooker Bee Phase: Probability-proportional selection (roulette wheel) based on makespan fitness.
  * 3. Scout Bee Phase: Abandonment of exhausted food sources exceeding trial limit.
  *
- * Note: Clearly designated as a proposed baseline implementation adhering to
- * standard ABC literature parameters for fair benchmark comparison against GA and PSO.
+ * Parameters per Table 2:
+ * - Population size: 75
+ * - Food number: Cloudlet (dynamic per scenario: 50 or 100)
+ * - LB: 0, UB: VMs
  */
 public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
 
     public static final int COLONY_SIZE = 75;
-    public static final int FOOD_SOURCES = 75;
-    public static final int LIMIT = 20;
+    public static final int DEFAULT_LIMIT = 20;
 
     @Override
     public Schedule solve(
@@ -39,18 +40,24 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
             return new Schedule(0);
         }
 
+        // Table 2: Food number: Cloudlet
+        int foodSourcesCount = taskCount;
+        if (foodSourcesCount < 2) {
+            foodSourcesCount = COLONY_SIZE;
+        }
+
         Random random = new Random(seed);
         FitnessEvaluator evaluator = new FitnessEvaluator(vmCount);
 
-        int[][] foodSources = new int[FOOD_SOURCES][taskCount];
-        double[] makespans = new double[FOOD_SOURCES];
-        int[] trialCounts = new int[FOOD_SOURCES];
+        int[][] foodSources = new int[foodSourcesCount][taskCount];
+        double[] makespans = new double[foodSourcesCount];
+        int[] trialCounts = new int[foodSourcesCount];
 
         int[] globalBest = null;
         double globalBestMakespan = Double.POSITIVE_INFINITY;
 
         // Initialize food sources randomly
-        for (int i = 0; i < FOOD_SOURCES; i++) {
+        for (int i = 0; i < foodSourcesCount; i++) {
             for (int t = 0; t < taskCount; t++) {
                 foodSources[i][t] = random.nextInt(vmCount);
             }
@@ -67,14 +74,13 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
         for (int cycle = 0; cycle < iterations; cycle++) {
 
             // 1. Employed Bee Phase
-            for (int i = 0; i < FOOD_SOURCES; i++) {
-                int partner = random.nextInt(FOOD_SOURCES);
-                while (partner == i && FOOD_SOURCES > 1) {
-                    partner = random.nextInt(FOOD_SOURCES);
+            for (int i = 0; i < foodSourcesCount; i++) {
+                int partner = random.nextInt(foodSourcesCount);
+                while (partner == i && foodSourcesCount > 1) {
+                    partner = random.nextInt(foodSourcesCount);
                 }
 
                 int[] candidate = foodSources[i].clone();
-                // Perturb one or more task assignments using difference vector
                 int paramToChange = random.nextInt(taskCount);
                 double phi = (random.nextDouble() * 2.0) - 1.0;
                 int diff = (int) Math.round(phi * (foodSources[i][paramToChange] - foodSources[partner][paramToChange]));
@@ -96,20 +102,18 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
             }
 
             // 2. Onlooker Bee Phase
-            // Calculate probabilities based on fitness = 1 / (1 + makespan)
-            double[] fitness = new double[FOOD_SOURCES];
+            double[] fitness = new double[foodSourcesCount];
             double totalFitness = 0.0;
-            for (int i = 0; i < FOOD_SOURCES; i++) {
+            for (int i = 0; i < foodSourcesCount; i++) {
                 fitness[i] = 1.0 / (1.0 + makespans[i]);
                 totalFitness += fitness[i];
             }
 
-            for (int i = 0; i < FOOD_SOURCES; i++) {
-                // Roulette wheel selection
+            for (int i = 0; i < foodSourcesCount; i++) {
                 double threshold = random.nextDouble() * totalFitness;
                 double accumulated = 0.0;
                 int selected = 0;
-                for (int j = 0; j < FOOD_SOURCES; j++) {
+                for (int j = 0; j < foodSourcesCount; j++) {
                     accumulated += fitness[j];
                     if (accumulated >= threshold) {
                         selected = j;
@@ -117,9 +121,9 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
                     }
                 }
 
-                int partner = random.nextInt(FOOD_SOURCES);
-                while (partner == selected && FOOD_SOURCES > 1) {
-                    partner = random.nextInt(FOOD_SOURCES);
+                int partner = random.nextInt(foodSourcesCount);
+                while (partner == selected && foodSourcesCount > 1) {
+                    partner = random.nextInt(foodSourcesCount);
                 }
 
                 int[] candidate = foodSources[selected].clone();
@@ -144,9 +148,8 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
             }
 
             // 3. Scout Bee Phase
-            for (int i = 0; i < FOOD_SOURCES; i++) {
-                if (trialCounts[i] >= LIMIT) {
-                    // Reinitialize food source
+            for (int i = 0; i < foodSourcesCount; i++) {
+                if (trialCounts[i] >= DEFAULT_LIMIT) {
                     for (int t = 0; t < taskCount; t++) {
                         foodSources[i][t] = random.nextInt(vmCount);
                     }
@@ -163,7 +166,10 @@ public class ArtificialBeeColonyScheduler implements SchedulingAlgorithm {
         return toSchedule(globalBest);
     }
 
-    private double evaluate(List<Task> tasks, int[] assignment, FitnessEvaluator evaluator) {
+    private double evaluate(
+            List<Task> tasks,
+            int[] assignment,
+            FitnessEvaluator evaluator) {
         Schedule schedule = toSchedule(assignment);
         return evaluator.evaluate(tasks, schedule).getMakespan();
     }

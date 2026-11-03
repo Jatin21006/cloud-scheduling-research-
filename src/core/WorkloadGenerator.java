@@ -10,9 +10,9 @@ import java.util.Set;
 public class WorkloadGenerator {
 	public static final long NORMAL_TASK_LENGTH_MI = 300;
 	public static final long NORMAL_FILE_SIZE_MB = 300;
-	public static final long DDOS_TASK_LENGTH_MI = NORMAL_TASK_LENGTH_MI * 100;
-	public static final long DDOS_FILE_SIZE_MB = 3000;
-	public static final double DEFAULT_DDOS_ATTACK_RATIO = 0.10;
+	public static final long DDOS_TASK_LENGTH_MI = NORMAL_TASK_LENGTH_MI * 100; // 30,000 MI
+	public static final long DDOS_FILE_SIZE_MB = 3000; // 3,000 MB
+	public static final double DEFAULT_DDOS_ATTACK_RATIO = 1.0; // Volumetric flood: 100% cloudlets scaled
 
 	public enum WorkloadType {
 		NORMAL,
@@ -79,8 +79,17 @@ public class WorkloadGenerator {
 
 	/**
 	 * Generates a full WorkloadTask list for the given workload type, task count, and seed.
+	 * In DDOS mode, volumetric flooding scales all arriving cloudlets by 100x length (30,000 MI)
+	 * and 10x file sizes (3000 MB), matching the paper's volumetric flood emulation.
 	 */
 	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed) {
+		return generateWorkload(type, taskCount, seed, DEFAULT_DDOS_ATTACK_RATIO);
+	}
+
+	/**
+	 * Overloaded generator allowing a specific attack ratio if needed.
+	 */
+	public List<WorkloadTask> generateWorkload(WorkloadType type, int taskCount, long seed, double attackRatio) {
 		if (type == null) {
 			throw new IllegalArgumentException("Workload type must not be null");
 		}
@@ -97,7 +106,15 @@ public class WorkloadGenerator {
 			}
 			return normalWorkload;
 		} else {
-			int attackCount = (int) Math.round(taskCount * DEFAULT_DDOS_ATTACK_RATIO);
+			int attackCount = (int) Math.round(taskCount * attackRatio);
+			if (attackCount >= taskCount) {
+				Set<Integer> allAttackIds = new HashSet<Integer>();
+				for (int i = 0; i < taskCount; i++) {
+					allAttackIds.add(i);
+				}
+				return generateDdosWorkload(base, allAttackIds);
+			}
+
 			Random rng = new Random(seed);
 			List<Integer> allIds = new ArrayList<Integer>();
 			for (int i = 0; i < taskCount; i++) {

@@ -18,12 +18,13 @@ import org.cloudbus.cloudsim.Cloudlet;
  * Unified Experiment Runner for cloud task scheduling research.
  *
  * Runs matched experiments across algorithms under Normal and DDoS workloads.
- * Evaluates both mathematical/analytical makespan and actual CloudSim simulation observed makespan.
+ * Evaluates both mathematical/analytical makespan and actual CloudSim simulation observed makespan,
+ * along with Resource Utilization and host execution time.
  */
 public class UnifiedExperimentRunner {
 
     public static final long DEFAULT_BASE_SEED = 0L;
-    public static final int DEFAULT_VM_COUNT = 5;
+    public static final int DEFAULT_VM_COUNT = 10; // Table 1: 10 VMs
 
     public static class Record {
         public final String algorithm;
@@ -35,7 +36,9 @@ public class UnifiedExperimentRunner {
         public final int trialNumber;
         public final long seed;
         public final double analyticalMakespan;
+        public final double analyticalResourceUtilization;
         public final double cloudSimMakespan;
+        public final double cloudSimResourceUtilization;
         public final long executionTimeMs;
         public final String status;
         public final String errorDetails;
@@ -50,7 +53,9 @@ public class UnifiedExperimentRunner {
                 int trialNumber,
                 long seed,
                 double analyticalMakespan,
+                double analyticalResourceUtilization,
                 double cloudSimMakespan,
+                double cloudSimResourceUtilization,
                 long executionTimeMs,
                 String status,
                 String errorDetails) {
@@ -63,14 +68,16 @@ public class UnifiedExperimentRunner {
             this.trialNumber = trialNumber;
             this.seed = seed;
             this.analyticalMakespan = analyticalMakespan;
+            this.analyticalResourceUtilization = analyticalResourceUtilization;
             this.cloudSimMakespan = cloudSimMakespan;
+            this.cloudSimResourceUtilization = cloudSimResourceUtilization;
             this.executionTimeMs = executionTimeMs;
             this.status = status;
             this.errorDetails = errorDetails;
         }
 
         public String toCsvRow() {
-            return String.format("%s,%d,%s,%d,%d,%d,%d,%d,%.6f,%.6f,%d,%s,%s",
+            return String.format("%s,%d,%s,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d,%s,%s",
                     algorithm,
                     scenarioId,
                     workloadType,
@@ -80,7 +87,9 @@ public class UnifiedExperimentRunner {
                     trialNumber,
                     seed,
                     analyticalMakespan,
+                    analyticalResourceUtilization,
                     cloudSimMakespan,
+                    cloudSimResourceUtilization,
                     executionTimeMs,
                     status,
                     escapeCsv(errorDetails));
@@ -122,12 +131,12 @@ public class UnifiedExperimentRunner {
         System.out.println("=================================================");
         System.out.println("   Cloud Scheduling Unified Experiment Runner    ");
         System.out.println("=================================================");
-        System.out.println("Scenario Filter  : " + (filterScenario == -1 ? "ALL" : filterScenario));
-        System.out.println("Workload Filter  : " + filterWorkload);
-        System.out.println("Algorithm Filter : " + filterAlgorithm);
+        System.out.println("Scenario Filter   : " + (filterScenario == -1 ? "ALL" : filterScenario));
+        System.out.println("Workload Filter   : " + filterWorkload);
+        System.out.println("Algorithm Filter  : " + filterAlgorithm);
         System.out.println("CloudSim Execution: " + runCloudSim);
-        System.out.println("VM Count         : " + vmCount);
-        System.out.println("Output Directory : " + outputDir.toAbsolutePath());
+        System.out.println("VM Count          : " + vmCount);
+        System.out.println("Output Directory  : " + outputDir.toAbsolutePath());
         System.out.println("-------------------------------------------------");
 
         Map<String, SchedulingAlgorithm> algorithms = new LinkedHashMap<String, SchedulingAlgorithm>();
@@ -140,7 +149,7 @@ public class UnifiedExperimentRunner {
         if ("ALL".equals(filterAlgorithm) || "ABC".equals(filterAlgorithm)) {
             algorithms.put("ABC", new ArtificialBeeColonyScheduler());
         }
-        if ("ALL".equals(filterAlgorithm) || "HYBRID".equals(filterAlgorithm)) {
+        if ("ALL".equals(filterAlgorithm) || "HYBRID".equals(filterAlgorithm) || "HYBRID-GA-PSO".equals(filterAlgorithm)) {
             algorithms.put("Hybrid-GA-PSO", new HybridGaPsoScheduler());
         }
 
@@ -193,7 +202,9 @@ public class UnifiedExperimentRunner {
                         SchedulingAlgorithm algorithm = entry.getValue();
 
                         double analyticalMakespan = -1.0;
+                        double analyticalResourceUtilization = -1.0;
                         double cloudSimMakespan = -1.0;
+                        double cloudSimResourceUtilization = -1.0;
                         long execTime = 0;
                         String status = "SUCCESS";
                         String errorDetails = "";
@@ -204,9 +215,10 @@ public class UnifiedExperimentRunner {
                             long endNs = System.nanoTime();
                             execTime = (endNs - startNs) / 1_000_000L;
 
-                            // Analytical makespan evaluation
+                            // Analytical makespan and Resource Utilization evaluation (Equation 6 & 9)
                             FitnessEvaluator.Result evalResult = evaluator.evaluate(tasks, schedule);
                             analyticalMakespan = evalResult.getMakespan();
+                            analyticalResourceUtilization = evalResult.getResourceUtilization();
 
                             // CloudSim simulation execution
                             if (runCloudSim) {
@@ -221,6 +233,7 @@ public class UnifiedExperimentRunner {
                                     }
                                 }
                                 cloudSimMakespan = csResult.getObservedMakespan();
+                                cloudSimResourceUtilization = csResult.getResourceUtilization();
                             }
                         } catch (Exception ex) {
                             status = "FAILURE";
@@ -239,7 +252,9 @@ public class UnifiedExperimentRunner {
                                 trial + 1,
                                 seed,
                                 analyticalMakespan,
+                                analyticalResourceUtilization,
                                 cloudSimMakespan,
+                                cloudSimResourceUtilization,
                                 execTime,
                                 status,
                                 errorDetails);
@@ -271,7 +286,7 @@ public class UnifiedExperimentRunner {
     }
 
     private static void writeCsv(Path path, List<Record> records) throws IOException {
-        String header = "algorithm,scenario_id,workload_type,task_count,vm_count,iterations,trial,seed,analytical_makespan,cloudsim_makespan,execution_time_ms,status,error_details";
+        String header = "algorithm,scenario_id,workload_type,task_count,vm_count,iterations,trial,seed,analytical_makespan,analytical_resource_utilization,cloudsim_makespan,cloudsim_resource_utilization,execution_time_ms,status,error_details";
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write(header);
             writer.newLine();

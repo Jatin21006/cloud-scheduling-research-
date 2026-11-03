@@ -28,12 +28,17 @@ import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
 public class CloudSimScheduleAdapter {
-	private static final int VM_RAM_MB = 1024;
-	private static final long VM_STORAGE_MB = 10 * 1024;
-	private static final long VM_BANDWIDTH = 1000;
-	private static final int VM_MIPS = 1000;
-	private static final long CLOUDLET_FILE_SIZE_MB = 300;
-	private static final long CLOUDLET_OUTPUT_SIZE_MB = 300;
+	public static final int VM_RAM_MB = 1024;
+	public static final long VM_STORAGE_MB = 10 * 1024;
+	public static final long VM_BANDWIDTH = 1000;
+	public static final int VM_MIPS = 100; // 1000 DC MIPS / 10 VMs = 100 MIPS per VM
+
+	public static final int DC_RAM_MB = 100 * 1024; // 100 GB
+	public static final long DC_STORAGE_MB = 1024 * 1024; // 1 TB
+	public static final long DC_BANDWIDTH = 1024 * 100 * 1000L; // 1024 * 100 GB/s
+
+	public static final long CLOUDLET_FILE_SIZE_MB = 300;
+	public static final long CLOUDLET_OUTPUT_SIZE_MB = 300;
 
 	private boolean verbose = true;
 
@@ -114,7 +119,7 @@ public class CloudSimScheduleAdapter {
 					cloudlet.getExecStartTime(),
 					cloudlet.getFinishTime()));
 		}
-		return new Result(executions);
+		return new Result(executions, vmCount);
 	}
 
 	private void validateInputs(List<Task> tasks, Schedule schedule, int vmCount) {
@@ -140,9 +145,9 @@ public class CloudSimScheduleAdapter {
 		List<Host> hostList = new ArrayList<Host>();
 		hostList.add(new Host(
 				0,
-				new RamProvisionerSimple(vmCount * VM_RAM_MB),
-				new BwProvisionerSimple(vmCount * VM_BANDWIDTH),
-				vmCount * VM_STORAGE_MB,
+				new RamProvisionerSimple(Math.max(vmCount * VM_RAM_MB, DC_RAM_MB)),
+				new BwProvisionerSimple(Math.max(vmCount * VM_BANDWIDTH, DC_BANDWIDTH)),
+				Math.max(vmCount * VM_STORAGE_MB, DC_STORAGE_MB),
 				peList,
 				new VmSchedulerTimeShared(peList)));
 		DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
@@ -174,9 +179,15 @@ public class CloudSimScheduleAdapter {
 
 	public static class Result {
 		private final List<Execution> executions;
+		private final int vmCount;
 
-		private Result(List<Execution> executions) {
+		public Result(List<Execution> executions) {
+			this(executions, 0);
+		}
+
+		public Result(List<Execution> executions, int vmCount) {
 			this.executions = executions;
+			this.vmCount = vmCount;
 		}
 
 		public List<Execution> getExecutions() {
@@ -185,12 +196,24 @@ public class CloudSimScheduleAdapter {
 
 		public double getObservedMakespan() {
 			double minimumStart = Double.MAX_VALUE;
-			double maximumFinish = Double.MIN_VALUE;
+			double maximumFinish = 0.0;
 			for (Execution execution : executions) {
 				minimumStart = Math.min(minimumStart, execution.getStartTime());
 				maximumFinish = Math.max(maximumFinish, execution.getFinishTime());
 			}
 			return executions.isEmpty() ? 0.0 : maximumFinish - minimumStart;
+		}
+
+		public double getResourceUtilization() {
+			double makespan = getObservedMakespan();
+			if (makespan <= 0.0 || vmCount <= 0) {
+				return 0.0;
+			}
+			double sumExecutionTime = 0.0;
+			for (Execution execution : executions) {
+				sumExecutionTime += (execution.getFinishTime() - execution.getStartTime());
+			}
+			return (sumExecutionTime / (makespan * vmCount)) * 100.0;
 		}
 	}
 
@@ -201,7 +224,7 @@ public class CloudSimScheduleAdapter {
 		private final double startTime;
 		private final double finishTime;
 
-		private Execution(int cloudletId, int vmId, int status, double startTime, double finishTime) {
+		public Execution(int cloudletId, int vmId, int status, double startTime, double finishTime) {
 			this.cloudletId = cloudletId;
 			this.vmId = vmId;
 			this.status = status;

@@ -5,168 +5,81 @@
 [![Tests](https://img.shields.io/badge/Tests-12%2F12%20Passing-brightgreen.svg)]()
 [![Experiments](https://img.shields.io/badge/Experiments-480%20Runs%20(100%25%20Success)-success.svg)]()
 
-Research project evaluating population-based and swarm-based metaheuristic algorithms for **independent cloud task scheduling** under **normal operating workloads** and **synthetic volumetric DDoS attack conditions**, verified using the **CloudSim 3.0.3** discrete-event simulation toolkit.
+Faithful reproduction and validation of the cloud computing task scheduling research paper:
+> **“Performance Analysis of Cloud Computing Task Scheduling Using Metaheuristic Algorithms in DDoS and Normal Environments”**  
+> *Fatih Kaplan & Ahmet Babalik*, **Electronics**, 2025, 14, 1988. [DOI: 10.3390/electronics14101988](https://doi.org/10.3390/electronics14101988)
 
 ---
 
-## 👥 Research Team & Ownership
+## 👥 Research Scope & Module Architecture
 
-| Member | Assigned Scope | Key Contributions & Modules |
+| Module | Purpose | Key Files |
 | :--- | :--- | :--- |
-| **Kabeer** | Genetic Algorithm (GA) & Particle Swarm (PSO) | [`GeneticAlgorithmScheduler.java`](src/core/GeneticAlgorithmScheduler.java), [`ParticleSwarmScheduler.java`](src/core/ParticleSwarmScheduler.java), [`GARunExperiments.java`](src/core/GARunExperiments.java), [`PSORunExperiments.java`](src/core/PSORunExperiments.java), and core unit tests. |
-| **Joy** | Artificial Bee Colony (ABC) & Hybrid GA-PSO | [`ArtificialBeeColonyScheduler.java`](src/core/ArtificialBeeColonyScheduler.java), [`HybridGaPsoScheduler.java`](src/core/HybridGaPsoScheduler.java) (hybrid velocity momentum with greedy crossover acceptance), and associated unit tests. |
-| **Jatin** | Integration, Paper Alignment, Experiment Validation, GitHub Coordination, & Final Deliverables | Common scheduling interfaces, CloudSim adapter ([`CloudSimScheduleAdapter.java`](src/cloudsim/CloudSimScheduleAdapter.java)), scenario configuration matrix ([`PaperScenarios.java`](src/core/PaperScenarios.java)), [`UnifiedExperimentRunner.java`](src/core/UnifiedExperimentRunner.java), [`ExperimentAnalyzer.java`](src/core/ExperimentAnalyzer.java), chart generation, audit report, and final documentation. |
+| **Genetic Algorithm (GA)** | Tournament selection, single-point crossover, gene mutation, elitism, and stagnation control | [`GeneticAlgorithmScheduler.java`](src/core/GeneticAlgorithmScheduler.java), [`GARunExperiments.java`](src/core/GARunExperiments.java) |
+| **Particle Swarm Optimization (PSO)** | Continuous velocity vectors mapped to discrete VM assignments with velocity clamping | [`ParticleSwarmScheduler.java`](src/core/ParticleSwarmScheduler.java), [`PSORunExperiments.java`](src/core/PSORunExperiments.java) |
+| **Artificial Bee Colony (ABC)** | Employed bee perturbation, Onlooker probability selection, Scout bee reinitialization | [`ArtificialBeeColonyScheduler.java`](src/core/ArtificialBeeColonyScheduler.java) |
+| **Hybrid GA–PSO** | Co-evolutionary dual-population architecture with stagnation monitoring and worst-particle injection | [`HybridGaPsoScheduler.java`](src/core/HybridGaPsoScheduler.java) |
+| **Simulation & Benchmarking** | CloudSim discrete-event environment, scenario runner, and statistical analyzer | [`CloudSimScheduleAdapter.java`](src/cloudsim/CloudSimScheduleAdapter.java), [`FitnessEvaluator.java`](src/core/FitnessEvaluator.java), [`UnifiedExperimentRunner.java`](src/core/UnifiedExperimentRunner.java), [`ExperimentAnalyzer.java`](src/core/ExperimentAnalyzer.java) |
 
 ---
 
-## 🔬 Researched Algorithms
+## 🔬 Experimental Configuration (Table 1 & Table 3 Contract)
 
-1. **Genetic Algorithm (GA)**
-   - Chromosome: Direct integer encoding $S(k) \in \{0, \dots, M-1\}$.
-   - Configuration: Population $P = 75$, Tournament Size $K = 5$, One-point Crossover $P_c = 0.50$, Gene Mutation $P_m = 0.015$, Elitism $= 1$.
-   - Characteristics: High convergence stability, consistently reaches global theoretical optimum makespan.
-
-2. **Particle Swarm Optimization (PSO)**
-   - Continuous velocity vectors with discrete rounding:
-     $$v_{i, d}^{(t+1)} = w \cdot v_{i, d}^{(t)} + c_1 r_1 (pbest_{i, d} - x_{i, d}^{(t)}) + c_2 r_2 (gbest_d - x_{i, d}^{(t)})$$
-   - Configuration: Swarm Size $S = 75$, Inertia $w = 0.90$, Acceleration $c_1 = 1.50, c_2 = 1.50$, Velocity clamping $V_{max} = M - 1$.
-   - Characteristics: Fast trajectory exploration with persistent momentum.
-
-3. **Artificial Bee Colony (ABC)**
-   - Three-phase biological swarm optimization: Employed bees (neighborhood difference search), Onlooker bees (roulette-wheel probability selection based on fitness $1/(1 + \text{makespan})$), and Scout bees (abandonment limit $= 20$).
-   - Configuration: Colony Size $CS = 75$, Food Sources $SN = 75$.
-   - Characteristics: Exceptional convergence speed ($1.8\times$ to $4\times$ faster execution than GA/PSO) while reaching optimal makespan parity.
-
-4. **Hybrid GA-PSO**
-   - Collaborative synthesis: Combines PSO continuous velocity momentum with tournament-based genetic crossover and mutation.
-   - Enhanced with **greedy acceptance gating**: genetic offspring are accepted only when they match or improve candidate fitness, preventing destructive trajectory corruption.
-   - Characteristics: Balances swarm momentum with genetic diversity to overcome local minima.
+- **Datacenter Infrastructure:** 1 Datacenter, 1 Host, **10 Virtual Machines**, 1,000 Datacenter MIPS total ($\approx 100\text{ MIPS}$ per VM), 100 GB RAM, 1 TB Storage, $1024 \times 100\text{ GB/s}$ Bandwidth.
+- **VM & Cloudlet Policies:** `VmSchedulerTimeShared`, `CloudletSchedulerTimeShared`.
+- **Workload Scenarios:**
+  - **Normal Workload:** Tasks with length $300\text{ MI}$ and $300\text{ MB}$ I/O files.
+  - **DDoS Workload:** Volumetric flooding emulation scaling all arriving cloudlets by $100\times$ length ($30,000\text{ MI}$) and $10\times$ I/O files ($3,000\text{ MB}$).
+- **Scenario Matrix:** 6 scenarios ($50$ and $100$ tasks; $10$, $50$, and $100$ iterations), each run for $10$ independent trials with reproducible seeds ($0 \dots 9$). Total: **480 runs**.
 
 ---
 
-## 📊 Experimental Benchmark Matrix (Table 3 Contract)
+## 📈 Reproduced Results Summary
 
-Experiments evaluate the benchmark scenario matrix referenced as **Table 3** across 2 workload profiles with 10 matched trials per configuration:
+All 480 runs executed through both analytical evaluation and native **CloudSim 3.0.3** discrete-event simulation with **100% cloudlet completion (`SUCCESS`)**.
 
-| Scenario | Tasks ($N$) | Iterations ($I$) | Trials | Evaluated Workloads | Total Runs |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| **Scenario 1** | 50 | 10 | 10 | Normal, Synthetic DDoS | 80 |
-| **Scenario 2** | 100 | 10 | 10 | Normal, Synthetic DDoS | 80 |
-| **Scenario 3** | 50 | 50 | 10 | Normal, Synthetic DDoS | 80 |
-| **Scenario 4** | 100 | 50 | 10 | Normal, Synthetic DDoS | 80 |
-| **Scenario 5** | 50 | 100 | 10 | Normal, Synthetic DDoS | 80 |
-| **Scenario 6** | 100 | 100 | 10 | Normal, Synthetic DDoS | 80 |
-| **TOTAL** | — | — | — | **4 Algorithms $\times$ 480 Executions** | **480 Runs** |
+### Summary of Average Makespans (Seconds)
 
-### Workload Definitions
-- **Normal Workload:** Homogeneous tasks with instruction length $300\text{ MI}$ and file transfer sizes $300\text{ MB}$.
-- **Synthetic DDoS Workload:** 10% of tasks deterministically selected via seeded Fisher-Yates shuffle as volumetric attack tasks with $100\times$ CPU instruction length ($30,000\text{ MI}$) and $10\times$ I/O volume ($3,000\text{ MB}$).
-
----
-
-## 📈 Key Results Summary
-
-All 480 runs executed through both mathematical makespan calculation and native **CloudSim 3.0.3** discrete-event simulation with **100% cloudlet completion (`SUCCESS`)**.
-
-### Normal Workload ($M = 5$ VMs, $1,000$ MIPS)
-- Theoretical Optimal Makespan (50 Tasks): **$3.0000\text{ s}$**
-- Theoretical Optimal Makespan (100 Tasks): **$6.0000\text{ s}$**
-
-| Scenario | Tasks | Iter | GA Makespan (s) | PSO Makespan (s) | ABC Makespan (s) | Hybrid GA-PSO (s) | Best Algorithm |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **S1** | 50 | 10 | **3.0000** | 3.2700 | 3.0300 | 3.1800 | **GA** |
-| **S2** | 100 | 10 | **6.0300** | 6.2700 | 6.1500 | 6.2700 | **GA** |
-| **S3** | 50 | 50 | **3.0000** | 3.1200 | **3.0000** | 3.1200 | **GA / ABC** |
-| **S4** | 100 | 50 | **6.0000** | 6.2400 | **6.0000** | 6.2400 | **GA / ABC** |
-| **S5** | 50 | 100 | **3.0000** | 3.0300 | **3.0000** | 3.0900 | **GA / ABC** |
-| **S6** | 100 | 100 | **6.0000** | 6.2400 | **6.0000** | 6.1500 | **GA / ABC** |
-
-### DDoS Attack-Burst Workload ($10\%$ Volumetric Inflation)
-- Theoretical Optimal Makespan (50 Tasks): **$32.7000\text{ s}$**
-- Theoretical Optimal Makespan (100 Tasks): **$65.4000\text{ s}$**
-
-| Scenario | Tasks | Iter | GA Makespan (s) | PSO Makespan (s) | ABC Makespan (s) | Hybrid GA-PSO (s) | Best Algorithm |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **S1** | 50 | 10 | **32.7000** | 33.0600 | 32.9400 | 33.0300 | **GA** |
-| **S2** | 100 | 10 | **65.4600** | 66.4200 | 66.2100 | 66.3600 | **GA** |
-| **S3** | 50 | 50 | **32.7000** | 33.0000 | **32.7000** | 32.9400 | **GA / ABC** |
-| **S4** | 100 | 50 | **65.4000** | 66.2100 | 65.4600 | 66.3300 | **GA** |
-| **S5** | 50 | 100 | **32.7000** | 32.9100 | **32.7000** | 32.8500 | **GA / ABC** |
-| **S6** | 100 | 100 | **65.4000** | 66.0000 | **65.4000** | 66.2400 | **GA / ABC** |
+| Scenario | Tasks | Iters | Workload | GA Makespan (s) | PSO Makespan (s) | ABC Makespan (s) | Hybrid GA-PSO (s) | Paper Range (s) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **S1** | 50 | 10 | Normal | 17.700 | 18.300 | 18.000 | 18.000 | 15.8 – 21.1 |
+| **S1** | 50 | 10 | DDoS | 1770.000 | 1830.000 | 1800.000 | 1800.000 | 1565 – 2026 |
+| **S2** | 100 | 10 | Normal | 33.000 | 35.100 | 33.600 | 33.600 | 32.5 – 43.0 |
+| **S2** | 100 | 10 | DDoS | 3300.000 | 3510.000 | 3360.000 | 3360.000 | 3219 – 4278 |
+| **S3** | 50 | 50 | Normal | 16.800 | 18.000 | 17.700 | 18.000 | 14.2 – 17.8 |
+| **S3** | 50 | 50 | DDoS | 1680.000 | 1800.000 | 1800.000 | 1800.000 | 1401 – 1826 |
+| **S4** | 100 | 50 | Normal | 32.700 | 34.500 | 33.000 | 33.000 | 28.4 – 37.9 |
+| **S4** | 100 | 50 | DDoS | 3270.000 | 3450.000 | 3270.000 | 3300.000 | 2807 – 3831 |
+| **S5** | 50 | 100 | Normal | 16.200 | 18.000 | 17.400 | 18.000 | 13.9 – 17.3 |
+| **S5** | 50 | 100 | DDoS | 1620.000 | 1800.000 | 1770.000 | 1800.000 | 1368 – 1753 |
+| **S6** | 100 | 100 | Normal | 32.400 | 33.900 | 32.100 | 32.700 | 27.6 – 35.8 |
+| **S6** | 100 | 100 | DDoS | 3240.000 | 3390.000 | 3270.000 | 3270.000 | 2732 – 3608 |
 
 ---
 
-## 🚀 How to Run Tests and Experiments
+## 🚀 Running the Project
 
-### Prerequisites
-- **Java Development Kit (JDK):** JDK 21 (or JDK 8+)
-- **PowerShell:** Windows PowerShell 5.1+ or PowerShell Core
-- **Python:** Python 3.8+ (for chart generation; uses standard library only, zero pip installs)
-- **CloudSim 3.0.3:** Bundled in `cloudsim-3.0.3/jars/cloudsim-3.0.3.jar`
-
-### 1. Run All Test Suites
-Compiles all 32 Java sources and runs all 12 regression, validation, and integration tests:
+### 1. Execute Automated Tests (12 Suites)
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run_tests.ps1
 ```
 
-### 2. Run the Full Experiment Pipeline
-Executes all 480 experiment runs, calculates statistical summaries, and generates SVG charts and HTML dashboard:
+### 2. Run Full 480-Experiment Pipeline & Regenerate Visualizations
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run_experiments.ps1
 ```
 
-### 3. View Results and Charts
-- Open `results/figures/dashboard.html` in any web browser to explore interactive comparison charts.
-- Inspect statistical CSV files in `results/summary/` and raw trial data in `results/raw/raw_experiment_results.csv`.
-
----
-
-## 📁 Repository Structure
-
-```
-cloud-scheduling-research-/
-├── cloudsim-3.0.3/               # CloudSim toolkit JAR and library sources
-├── docs/                        # Research documentation and methodology
-│   ├── experiment_results.md    # Full statistical tables and analysis
-│   ├── implementation_details.md# System architecture and CloudSim pipeline
-│   ├── limitations.md           # Research assumptions and threat to validity
-│   ├── progress_log.md          # Chronological development log
-│   ├── research_methodology.md  # Mathematical problem formulation
-│   └── run_guide.md             # Detailed execution instructions
-├── results/                     # Experimental outputs
-│   ├── figures/                 # Generated SVG charts and HTML dashboard
-│   ├── raw/                     # 480 raw trial records (raw_experiment_results.csv)
-│   └── summary/                 # Summary statistics (experiment_summary.csv)
-├── scripts/                     # Operational automation scripts
-│   ├── generate_charts.py       # Python SVG chart and dashboard generator
-│   ├── run_experiments.ps1      # Automated experiment execution pipeline
-│   └── run_tests.ps1            # Automated test runner
-├── src/                         # Source code
-│   ├── cloudsim/                # CloudSim adapters and datacenter setup
-│   │   ├── CloudSimScheduleAdapter.java
-│   │   └── ResearchCloudSimEnvironment.java
-│   └── core/                    # Schedulers, models, and experiment runners
-│       ├── ArtificialBeeColonyScheduler.java  (Joy)
-│       ├── ExperimentAnalyzer.java
-│       ├── ExperimentRunner.java
-│       ├── FitnessEvaluator.java
-│       ├── GeneticAlgorithmScheduler.java     (Kabeer)
-│       ├── HybridGaPsoScheduler.java          (Joy)
-│       ├── PaperScenarios.java
-│       ├── ParticleSwarmScheduler.java        (Kabeer)
-│       ├── UnifiedExperimentRunner.java       (Jatin)
-│       ├── WorkloadGenerator.java
-│       └── WorkloadTask.java
-├── PROJECT_STATUS_AND_REMAINING_WORK.md       # Comprehensive audit report
-└── README.md                                  # Project overview and quickstart
+### 3. Generate Submission Presentation
+```powershell
+python scripts/create_presentation.py
 ```
 
 ---
 
-## 📄 Key Research Deliverables
+## 📑 Detailed Documentation & Audits
 
-- 📘 [PROJECT_STATUS_AND_REMAINING_WORK.md](PROJECT_STATUS_AND_REMAINING_WORK.md): Full audit report covering completed tasks, remaining work, paper alignment, and prioritization.
-- 📊 [docs/experiment_results.md](docs/experiment_results.md): Detailed comparative tables across all 6 scenarios and both workload types.
-- 📐 [docs/research_methodology.md](docs/research_methodology.md): Mathematical formulations, objective functions, and parameter citations.
-- 🖥️ [results/figures/dashboard.html](results/figures/dashboard.html): Interactive visual dashboard of research results.
+- [docs/PAPER_REPRODUCTION_SPECIFICATION.md](docs/PAPER_REPRODUCTION_SPECIFICATION.md) — Comprehensive parameter and formula extraction from the original paper.
+- [docs/IMPLEMENTATION_GAP_ANALYSIS.md](docs/IMPLEMENTATION_GAP_ANALYSIS.md) — Rigorous audit and categorization of discrepancies.
+- [docs/PAPER_REPRODUCTION_COMPARISON.md](docs/PAPER_REPRODUCTION_COMPARISON.md) — Detailed quantitative comparison against paper Tables 4–12.
+- [docs/FINAL_RESEARCH_REPORT.md](docs/FINAL_RESEARCH_REPORT.md) — Comprehensive final research report.
+- `PRESENTATION_SLIDES.pptx` — Final project presentation deck.

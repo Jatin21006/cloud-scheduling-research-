@@ -6,7 +6,7 @@ param(
     [string]$Workload = "ALL",
     [string]$Algorithm = "ALL",
     [switch]$SkipCloudSim,
-    [int]$VmCount = 5
+    [int]$VmCount = 10
 )
 
 $ErrorActionPreference = "Stop"

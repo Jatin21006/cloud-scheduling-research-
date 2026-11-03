@@ -6,26 +6,35 @@ import java.util.Random;
 /**
  * Hybrid GA-PSO scheduler for cloud task scheduling.
  *
- * Integrates Particle Swarm Optimization (PSO) velocity momentum and memory
- * with Genetic Algorithm (GA) tournament selection, crossover, and mutation:
+ * Implements the co-evolutionary dual-population architecture defined in the paper:
+ * - Kaplan & Babalik, Electronics 2025, 14, 1988 (Algorithm 1, 2, 3, 4, 5 & Table 2).
  *
- * Phase 1 (PSO Momentum): Particles update continuous velocities and step towards
- * personal and global best positions.
- * Phase 2 (GA Genetic Recombination): Sub-optimal particles undergo tournament selection
- * and one-point crossover to escape local optima, followed by uniform mutation.
- *
- * Clearly labeled as an optimization-engineered hybrid synthesis combining the verified
- * GA (pop=75, cross=0.5, mut=0.015) and PSO (w=0.9, c1=1.5, c2=1.5) parameters.
+ * Key Architectural Components:
+ * 1. Dual Populations: GA population (N=75) and PSO swarm (N=75) initialized independently.
+ * 2. Iteration Reduction: Employs n/2 iterations (Lines 420-423) for computational efficiency.
+ * 3. Independent Iterative Step:
+ *    - PSO updates velocities, positions, personal bests, and swarm best.
+ *    - GA evolves through tournament selection, single-point crossover, and mutation (pm=0.0015).
+ * 4. Stagnation-Driven Hybridization:
+ *    - Tracks PSO swarm stagnation (threshold = 0.5, count = 15).
+ *    - When PSO stagnates, the fittest GA individual replaces the worst particle in the PSO swarm.
+ * 5. Global Best Tracking: gBest = min(gBest, fittestGA).
  */
 public class HybridGaPsoScheduler implements SchedulingAlgorithm {
 
     public static final int SWARM_SIZE = 75;
+    public static final int GA_POPULATION_SIZE = 75;
+
     public static final double INERTIA = 0.9;
     public static final double C1 = 1.5;
     public static final double C2 = 1.5;
+
     public static final int TOURNAMENT_SIZE = 5;
     public static final double CROSSOVER_PROBABILITY = 0.5;
-    public static final double MUTATION_PROBABILITY = 0.015;
+    public static final double MUTATION_PROBABILITY = 0.0015; // Table 2: 0.0015 for Hybrid
+
+    public static final double STAGNATION_THRESHOLD = 0.5;
+    public static final int STAGNATION_COUNT = 15;
 
     @Override
     public Schedule solve(
@@ -49,131 +58,218 @@ public class HybridGaPsoScheduler implements SchedulingAlgorithm {
         Random random = new Random(seed);
         FitnessEvaluator evaluator = new FitnessEvaluator(vmCount);
 
-        int[][] positions = new int[SWARM_SIZE][taskCount];
-        double[][] velocities = new double[SWARM_SIZE][taskCount];
-        int[][] personalBest = new int[SWARM_SIZE][taskCount];
-        double[] personalBestFitness = new double[SWARM_SIZE];
-        double[] currentFitness = new double[SWARM_SIZE];
+        // Section 3.1, Lines 420-423: Hybrid GA-PSO adopts n/2 iterations
+        int hybridIterations = Math.max(1, iterations / 2);
 
-        int[] globalBest = null;
-        double globalBestFitness = Double.POSITIVE_INFINITY;
+        // 1. Initialization (Algorithm 2)
+        // GA Population
+        int[][] gaPopulation = new int[GA_POPULATION_SIZE][taskCount];
+        double[] gaFitness = new double[GA_POPULATION_SIZE];
+        for (int i = 0; i < GA_POPULATION_SIZE; i++) {
+            for (int t = 0; t < taskCount; t++) {
+                gaPopulation[i][t] = random.nextInt(vmCount);
+            }
+            gaFitness[i] = evaluate(tasks, gaPopulation[i], evaluator);
+        }
+
+        // PSO Swarm
+        int[][] psoPositions = new int[SWARM_SIZE][taskCount];
+        double[][] psoVelocities = new double[SWARM_SIZE][taskCount];
+        int[][] psoPersonalBest = new int[SWARM_SIZE][taskCount];
+        double[] psoPersonalBestFitness = new double[SWARM_SIZE];
+        double[] psoCurrentFitness = new double[SWARM_SIZE];
+
         double maxVelocity = vmCount - 1;
 
-        // Initialize swarm
+        int[] gBest = null;
+        double globalBestFitness = Double.POSITIVE_INFINITY;
+
         for (int p = 0; p < SWARM_SIZE; p++) {
             for (int t = 0; t < taskCount; t++) {
-                positions[p][t] = random.nextInt(vmCount);
-                velocities[p][t] = (random.nextDouble() * 2.0 - 1.0);
+                psoPositions[p][t] = random.nextInt(vmCount);
+                psoVelocities[p][t] = (random.nextDouble() * 2.0 - 1.0);
             }
+            psoPersonalBest[p] = psoPositions[p].clone();
+            psoCurrentFitness[p] = evaluate(tasks, psoPositions[p], evaluator);
+            psoPersonalBestFitness[p] = psoCurrentFitness[p];
 
-            personalBest[p] = positions[p].clone();
-            currentFitness[p] = evaluate(tasks, positions[p], evaluator);
-            personalBestFitness[p] = currentFitness[p];
-
-            if (personalBestFitness[p] < globalBestFitness) {
-                globalBestFitness = personalBestFitness[p];
-                globalBest = personalBest[p].clone();
+            if (psoPersonalBestFitness[p] < globalBestFitness) {
+                globalBestFitness = psoPersonalBestFitness[p];
+                gBest = psoPersonalBest[p].clone();
             }
         }
 
-        // Iteration loop
-        for (int iteration = 0; iteration < iterations; iteration++) {
+        // Check GA best initially
+        int initialFittestGaIdx = findBestIndex(gaFitness);
+        if (gaFitness[initialFittestGaIdx] < globalBestFitness) {
+            globalBestFitness = gaFitness[initialFittestGaIdx];
+            gBest = gaPopulation[initialFittestGaIdx].clone();
+        }
 
-            // Step 1: PSO velocity and position updates
+        double lastPsoBestFitness = globalBestFitness;
+        int stagnationCounter = 0;
+
+        // 2. Iteration Loop (Algorithm 4 & 5)
+        for (int iter = 0; iter < hybridIterations; iter++) {
+
+            // Step a: PSO Swarm Update
+            double currentPsoBestInSwarm = Double.POSITIVE_INFINITY;
+            int worstParticleIdx = 0;
+            double worstParticleFitness = Double.NEGATIVE_INFINITY;
+
             for (int p = 0; p < SWARM_SIZE; p++) {
                 for (int t = 0; t < taskCount; t++) {
                     double r1 = random.nextDouble();
                     double r2 = random.nextDouble();
 
-                    velocities[p][t] = (INERTIA * velocities[p][t])
-                            + (C1 * r1 * (personalBest[p][t] - positions[p][t]))
-                            + (C2 * r2 * (globalBest[t] - positions[p][t]));
+                    psoVelocities[p][t] = (INERTIA * psoVelocities[p][t])
+                            + (C1 * r1 * (psoPersonalBest[p][t] - psoPositions[p][t]))
+                            + (C2 * r2 * (gBest[t] - psoPositions[p][t]));
 
-                    if (velocities[p][t] > maxVelocity) {
-                        velocities[p][t] = maxVelocity;
-                    } else if (velocities[p][t] < -maxVelocity) {
-                        velocities[p][t] = -maxVelocity;
+                    if (psoVelocities[p][t] > maxVelocity) {
+                        psoVelocities[p][t] = maxVelocity;
+                    } else if (psoVelocities[p][t] < -maxVelocity) {
+                        psoVelocities[p][t] = -maxVelocity;
                     }
 
-                    int step = (int) Math.round(velocities[p][t]);
-                    int newVm = positions[p][t] + step;
-                    positions[p][t] = Math.max(0, Math.min(vmCount - 1, newVm));
+                    int step = (int) Math.round(psoVelocities[p][t]);
+                    int newVm = psoPositions[p][t] + step;
+                    psoPositions[p][t] = Math.max(0, Math.min(vmCount - 1, newVm));
                 }
 
-                currentFitness[p] = evaluate(tasks, positions[p], evaluator);
+                psoCurrentFitness[p] = evaluate(tasks, psoPositions[p], evaluator);
 
-                if (currentFitness[p] < personalBestFitness[p]) {
-                    personalBest[p] = positions[p].clone();
-                    personalBestFitness[p] = currentFitness[p];
-                    if (currentFitness[p] < globalBestFitness) {
-                        globalBestFitness = currentFitness[p];
-                        globalBest = personalBest[p].clone();
-                    }
+                if (psoCurrentFitness[p] < psoPersonalBestFitness[p]) {
+                    psoPersonalBest[p] = psoPositions[p].clone();
+                    psoPersonalBestFitness[p] = psoCurrentFitness[p];
+                }
+
+                if (psoPersonalBestFitness[p] < currentPsoBestInSwarm) {
+                    currentPsoBestInSwarm = psoPersonalBestFitness[p];
+                }
+
+                if (psoCurrentFitness[p] > worstParticleFitness) {
+                    worstParticleFitness = psoCurrentFitness[p];
+                    worstParticleIdx = p;
                 }
             }
 
-            // Step 2: GA Crossover & Mutation phase with greedy acceptance to escape local optima
-            // without corrupting particle trajectory or accepting worse offspring.
-            if (taskCount > 1) {
-                for (int p = 1; p < SWARM_SIZE; p++) {
-                    int p1 = tournamentSelect(currentFitness, random);
-                    int p2 = tournamentSelect(currentFitness, random);
+            // PSO Stagnation Evaluation
+            if (Math.abs(lastPsoBestFitness - currentPsoBestInSwarm) < STAGNATION_THRESHOLD) {
+                stagnationCounter++;
+            } else {
+                stagnationCounter = 0;
+                lastPsoBestFitness = currentPsoBestInSwarm;
+            }
 
-                    int[] child = positions[p1].clone();
+            // Step b: GA Population Evolution
+            int[][] nextGaPopulation = new int[GA_POPULATION_SIZE][taskCount];
+            int eliteGaIdx = findBestIndex(gaFitness);
+            nextGaPopulation[0] = gaPopulation[eliteGaIdx].clone(); // Elitism
 
-                    if (random.nextDouble() < CROSSOVER_PROBABILITY) {
-                        int point = 1 + random.nextInt(taskCount - 1);
-                        for (int t = point; t < taskCount; t++) {
-                            child[t] = positions[p2][t];
-                        }
-                    }
+            int nextIndex = 1;
+            while (nextIndex < GA_POPULATION_SIZE) {
+                int p1 = tournamentSelect(gaFitness, random);
+                int p2 = tournamentSelect(gaFitness, random);
 
-                    mutate(child, vmCount, random);
+                int[] child1 = gaPopulation[p1].clone();
+                int[] child2 = gaPopulation[p2].clone();
 
-                    double childFitness = evaluate(tasks, child, evaluator);
-
-                    // Greedy acceptance: only accept offspring if it improves or equals current particle fitness
-                    if (childFitness <= currentFitness[p]) {
-                        positions[p] = child;
-                        currentFitness[p] = childFitness;
-
-                        if (childFitness < personalBestFitness[p]) {
-                            personalBest[p] = child.clone();
-                            personalBestFitness[p] = childFitness;
-
-                            if (childFitness < globalBestFitness) {
-                                globalBestFitness = childFitness;
-                                globalBest = personalBest[p].clone();
-                            }
-                        }
+                if (taskCount > 1 && random.nextDouble() < CROSSOVER_PROBABILITY) {
+                    int point = 1 + random.nextInt(taskCount - 1);
+                    for (int t = point; t < taskCount; t++) {
+                        child1[t] = gaPopulation[p2][t];
+                        child2[t] = gaPopulation[p1][t];
                     }
                 }
+
+                mutate(child1, vmCount, random, MUTATION_PROBABILITY);
+                mutate(child2, vmCount, random, MUTATION_PROBABILITY);
+
+                nextGaPopulation[nextIndex++] = child1;
+                if (nextIndex < GA_POPULATION_SIZE) {
+                    nextGaPopulation[nextIndex++] = child2;
+                }
+            }
+
+            gaPopulation = nextGaPopulation;
+            for (int i = 0; i < GA_POPULATION_SIZE; i++) {
+                gaFitness[i] = evaluate(tasks, gaPopulation[i], evaluator);
+            }
+
+            int fittestGaIdx = findBestIndex(gaFitness);
+            int[] fittestGA = gaPopulation[fittestGaIdx];
+            double fittestGaFitness = gaFitness[fittestGaIdx];
+
+            // Step c: Hybridization & Stagnation Injection (Algorithm 3 & 5)
+            if (stagnationCounter >= STAGNATION_COUNT) {
+                // Replace worst particle in PSO swarm with fittest GA individual
+                psoPositions[worstParticleIdx] = fittestGA.clone();
+                psoCurrentFitness[worstParticleIdx] = fittestGaFitness;
+                psoPersonalBest[worstParticleIdx] = fittestGA.clone();
+                psoPersonalBestFitness[worstParticleIdx] = fittestGaFitness;
+
+                // Reset velocity for injected particle
+                for (int t = 0; t < taskCount; t++) {
+                    psoVelocities[worstParticleIdx][t] = (random.nextDouble() * 2.0 - 1.0);
+                }
+
+                stagnationCounter = 0;
+                lastPsoBestFitness = Math.min(lastPsoBestFitness, fittestGaFitness);
+            }
+
+            // Update overall global best
+            if (currentPsoBestInSwarm < globalBestFitness) {
+                globalBestFitness = currentPsoBestInSwarm;
+                for (int p = 0; p < SWARM_SIZE; p++) {
+                    if (psoPersonalBestFitness[p] == globalBestFitness) {
+                        gBest = psoPersonalBest[p].clone();
+                        break;
+                    }
+                }
+            }
+            if (fittestGaFitness < globalBestFitness) {
+                globalBestFitness = fittestGaFitness;
+                gBest = fittestGA.clone();
             }
         }
 
-        return toSchedule(globalBest);
+        return toSchedule(gBest);
     }
 
     private int tournamentSelect(double[] fitness, Random random) {
-        int bestIdx = random.nextInt(SWARM_SIZE);
+        int best = random.nextInt(GA_POPULATION_SIZE);
         for (int i = 1; i < TOURNAMENT_SIZE; i++) {
-            int candidate = random.nextInt(SWARM_SIZE);
-            if (fitness[candidate] < fitness[bestIdx]) {
-                bestIdx = candidate;
+            int candidate = random.nextInt(GA_POPULATION_SIZE);
+            if (fitness[candidate] < fitness[best]) {
+                best = candidate;
             }
         }
-        return bestIdx;
+        return best;
     }
 
-    private void mutate(int[] chromosome, int vmCount, Random random) {
-        for (int gene = 0; gene < chromosome.length; gene++) {
-            if (random.nextDouble() < MUTATION_PROBABILITY) {
-                chromosome[gene] = random.nextInt(vmCount);
+    private int findBestIndex(double[] fitness) {
+        int bestIndex = 0;
+        for (int i = 1; i < fitness.length; i++) {
+            if (fitness[i] < fitness[bestIndex]) {
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
+    }
+
+    private void mutate(int[] chromosome, int vmCount, Random random, double rate) {
+        for (int t = 0; t < chromosome.length; t++) {
+            if (random.nextDouble() < rate) {
+                chromosome[t] = random.nextInt(vmCount);
             }
         }
     }
 
-    private double evaluate(List<Task> tasks, int[] assignment, FitnessEvaluator evaluator) {
+    private double evaluate(
+            List<Task> tasks,
+            int[] assignment,
+            FitnessEvaluator evaluator) {
         Schedule schedule = toSchedule(assignment);
         return evaluator.evaluate(tasks, schedule).getMakespan();
     }

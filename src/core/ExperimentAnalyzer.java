@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,8 +14,8 @@ import java.util.Map;
 
 /**
  * Statistical analyzer for cloud task scheduling experiment results.
- * Computes mean, median, standard deviation, min, max, execution times,
- * and relative improvements over baseline.
+ * Computes mean, median, standard deviation (population std dev per Eq 5), min, max,
+ * resource utilization, execution times, and relative improvements.
  */
 public class ExperimentAnalyzer {
 
@@ -30,7 +29,9 @@ public class ExperimentAnalyzer {
         public int trialNumber;
         public long seed;
         public double analyticalMakespan;
+        public double analyticalResourceUtilization;
         public double cloudSimMakespan;
+        public double cloudSimResourceUtilization;
         public long executionTimeMs;
         public String status;
         public String errorDetails;
@@ -53,11 +54,21 @@ public class ExperimentAnalyzer {
         public double minAnalyticalMakespan;
         public double maxAnalyticalMakespan;
 
+        public double meanAnalyticalResourceUtilization;
+        public double stdAnalyticalResourceUtilization;
+        public double minAnalyticalResourceUtilization;
+        public double maxAnalyticalResourceUtilization;
+
         public double meanCloudSimMakespan;
         public double medianCloudSimMakespan;
         public double stdCloudSimMakespan;
         public double minCloudSimMakespan;
         public double maxCloudSimMakespan;
+
+        public double meanCloudSimResourceUtilization;
+        public double stdCloudSimResourceUtilization;
+        public double minCloudSimResourceUtilization;
+        public double maxCloudSimResourceUtilization;
 
         public double meanExecutionTimeMs;
 
@@ -99,6 +110,7 @@ public class ExperimentAnalyzer {
         Map<String, GroupStats> statsMap = new LinkedHashMap<String, GroupStats>();
 
         for (Map.Entry<String, List<Row>> entry : grouped.entrySet()) {
+            String key = entry.getKey();
             List<Row> groupRows = entry.getValue();
             if (groupRows.isEmpty()) continue;
 
@@ -112,56 +124,72 @@ public class ExperimentAnalyzer {
             gs.iterations = first.iterations;
             gs.totalTrials = groupRows.size();
 
-            List<Double> analyticalVals = new ArrayList<Double>();
-            List<Double> cloudSimVals = new ArrayList<Double>();
-            List<Long> execTimes = new ArrayList<Long>();
-
+            List<Double> analyticalMakespans = new ArrayList<Double>();
+            List<Double> analyticalRUs = new ArrayList<Double>();
+            List<Double> csMakespans = new ArrayList<Double>();
+            List<Double> csRUs = new ArrayList<Double>();
+            List<Double> execTimes = new ArrayList<Double>();
             int successes = 0;
+
             for (Row r : groupRows) {
-                if ("SUCCESS".equalsIgnoreCase(r.status)) {
+                if ("SUCCESS".equalsIgnoreCase(r.status) || "WARNING".equalsIgnoreCase(r.status)) {
                     successes++;
-                    analyticalVals.add(r.analyticalMakespan);
-                    cloudSimVals.add(r.cloudSimMakespan);
-                    execTimes.add(r.executionTimeMs);
+                    analyticalMakespans.add(r.analyticalMakespan);
+                    analyticalRUs.add(r.analyticalResourceUtilization);
+                    if (r.cloudSimMakespan >= 0) {
+                        csMakespans.add(r.cloudSimMakespan);
+                        csRUs.add(r.cloudSimResourceUtilization);
+                    }
+                    execTimes.add((double) r.executionTimeMs);
                 }
             }
             gs.successfulTrials = successes;
 
-            gs.meanAnalyticalMakespan = computeMean(analyticalVals);
-            gs.medianAnalyticalMakespan = computeMedian(analyticalVals);
-            gs.stdAnalyticalMakespan = computeStd(analyticalVals, gs.meanAnalyticalMakespan);
-            gs.minAnalyticalMakespan = computeMin(analyticalVals);
-            gs.maxAnalyticalMakespan = computeMax(analyticalVals);
+            // Analytical stats
+            gs.meanAnalyticalMakespan = computeMean(analyticalMakespans);
+            gs.medianAnalyticalMakespan = computeMedian(analyticalMakespans);
+            gs.stdAnalyticalMakespan = computeStd(analyticalMakespans, gs.meanAnalyticalMakespan);
+            gs.minAnalyticalMakespan = computeMin(analyticalMakespans);
+            gs.maxAnalyticalMakespan = computeMax(analyticalMakespans);
 
-            gs.meanCloudSimMakespan = computeMean(cloudSimVals);
-            gs.medianCloudSimMakespan = computeMedian(cloudSimVals);
-            gs.stdCloudSimMakespan = computeStd(cloudSimVals, gs.meanCloudSimMakespan);
-            gs.minCloudSimMakespan = computeMin(cloudSimVals);
-            gs.maxCloudSimMakespan = computeMax(cloudSimVals);
+            gs.meanAnalyticalResourceUtilization = computeMean(analyticalRUs);
+            gs.stdAnalyticalResourceUtilization = computeStd(analyticalRUs, gs.meanAnalyticalResourceUtilization);
+            gs.minAnalyticalResourceUtilization = computeMin(analyticalRUs);
+            gs.maxAnalyticalResourceUtilization = computeMax(analyticalRUs);
 
-            double sumExec = 0;
-            for (Long t : execTimes) sumExec += t;
-            gs.meanExecutionTimeMs = execTimes.isEmpty() ? 0 : sumExec / execTimes.size();
+            // CloudSim stats
+            gs.meanCloudSimMakespan = computeMean(csMakespans);
+            gs.medianCloudSimMakespan = computeMedian(csMakespans);
+            gs.stdCloudSimMakespan = computeStd(csMakespans, gs.meanCloudSimMakespan);
+            gs.minCloudSimMakespan = computeMin(csMakespans);
+            gs.maxCloudSimMakespan = computeMax(csMakespans);
 
-            statsMap.put(entry.getKey(), gs);
+            gs.meanCloudSimResourceUtilization = computeMean(csRUs);
+            gs.stdCloudSimResourceUtilization = computeStd(csRUs, gs.meanCloudSimResourceUtilization);
+            gs.minCloudSimResourceUtilization = computeMin(csRUs);
+            gs.maxCloudSimResourceUtilization = computeMax(csRUs);
+
+            gs.meanExecutionTimeMs = computeMean(execTimes);
+
+            statsMap.put(key, gs);
         }
 
-        // Calculate relative improvements over baselines within matched scenario & workload
+        // Compute comparative improvement over PSO and GA
         for (GroupStats gs : statsMap.values()) {
             String psoKey = gs.workloadType + "|" + gs.scenarioId + "|PSO";
             String gaKey = gs.workloadType + "|" + gs.scenarioId + "|GA";
 
             if (statsMap.containsKey(psoKey)) {
-                double psoMakespan = statsMap.get(psoKey).meanAnalyticalMakespan;
-                if (psoMakespan > 0) {
-                    gs.improvementOverPsoPct = ((psoMakespan - gs.meanAnalyticalMakespan) / psoMakespan) * 100.0;
+                double psoMs = statsMap.get(psoKey).meanAnalyticalMakespan;
+                if (psoMs > 0) {
+                    gs.improvementOverPsoPct = ((psoMs - gs.meanAnalyticalMakespan) / psoMs) * 100.0;
                 }
             }
 
             if (statsMap.containsKey(gaKey)) {
-                double gaMakespan = statsMap.get(gaKey).meanAnalyticalMakespan;
-                if (gaMakespan > 0) {
-                    gs.improvementOverGaPct = ((gaMakespan - gs.meanAnalyticalMakespan) / gaMakespan) * 100.0;
+                double gaMs = statsMap.get(gaKey).meanAnalyticalMakespan;
+                if (gaMs > 0) {
+                    gs.improvementOverGaPct = ((gaMs - gs.meanAnalyticalMakespan) / gaMs) * 100.0;
                 }
             }
         }
@@ -204,13 +232,14 @@ public class ExperimentAnalyzer {
         }
     }
 
+    // Population Standard Deviation: Equation (5) in paper: Std = sqrt( 1/N * sum( (Ci - Avg)^2 ) )
     private static double computeStd(List<Double> vals, double mean) {
-        if (vals.size() <= 1) return 0.0;
+        if (vals.isEmpty()) return 0.0;
         double sumSq = 0.0;
         for (double v : vals) {
             sumSq += Math.pow(v - mean, 2);
         }
-        return Math.sqrt(sumSq / (vals.size() - 1));
+        return Math.sqrt(sumSq / vals.size());
     }
 
     private static double computeMin(List<Double> vals) {
@@ -222,22 +251,68 @@ public class ExperimentAnalyzer {
 
     private static double computeMax(List<Double> vals) {
         if (vals.isEmpty()) return 0.0;
-        double max = -Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
         for (double v : vals) max = Math.max(max, v);
         return max;
     }
 
-    private static void writeSummaryCsv(Path path, Iterable<GroupStats> statsList) throws IOException {
-        String header = "workload_type,scenario_id,task_count,vm_count,iterations,algorithm,trials,successes,"
-                + "mean_analytical_makespan,median_analytical_makespan,std_analytical_makespan,min_analytical_makespan,max_analytical_makespan,"
-                + "mean_cloudsim_makespan,median_cloudsim_makespan,std_cloudsim_makespan,min_cloudsim_makespan,max_cloudsim_makespan,"
-                + "mean_execution_time_ms,improvement_over_pso_pct,improvement_over_ga_pct";
+    private static List<Row> readRawRows(Path path) throws IOException {
+        List<Row> rows = new ArrayList<Row>();
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            String line = reader.readLine(); // skip header
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                String[] parts = line.split(",", -1);
+                if (parts.length < 13) continue;
+
+                Row r = new Row();
+                r.algorithm = parts[0].trim();
+                r.scenarioId = Integer.parseInt(parts[1].trim());
+                r.workloadType = parts[2].trim();
+                r.taskCount = Integer.parseInt(parts[3].trim());
+                r.vmCount = Integer.parseInt(parts[4].trim());
+                r.iterations = Integer.parseInt(parts[5].trim());
+                r.trialNumber = Integer.parseInt(parts[6].trim());
+                r.seed = Long.parseLong(parts[7].trim());
+                r.analyticalMakespan = Double.parseDouble(parts[8].trim());
+
+                if (parts.length >= 15) {
+                    r.analyticalResourceUtilization = Double.parseDouble(parts[9].trim());
+                    r.cloudSimMakespan = Double.parseDouble(parts[10].trim());
+                    r.cloudSimResourceUtilization = Double.parseDouble(parts[11].trim());
+                    r.executionTimeMs = Long.parseLong(parts[12].trim());
+                    r.status = parts[13].trim();
+                    r.errorDetails = parts[14].trim();
+                } else {
+                    // Backwards compatible parsing
+                    r.analyticalResourceUtilization = 0.0;
+                    r.cloudSimMakespan = Double.parseDouble(parts[9].trim());
+                    r.cloudSimResourceUtilization = 0.0;
+                    r.executionTimeMs = Long.parseLong(parts[10].trim());
+                    r.status = parts[11].trim();
+                    r.errorDetails = parts[12].trim();
+                }
+
+                rows.add(r);
+            }
+        }
+        return rows;
+    }
+
+    private static void writeSummaryCsv(Path path, Iterable<GroupStats> stats) throws IOException {
+        String header = "workload_type,scenario_id,task_count,vm_count,iterations,algorithm,trials,successes," +
+                "mean_analytical_makespan,median_analytical_makespan,std_analytical_makespan,min_analytical_makespan,max_analytical_makespan," +
+                "mean_resource_utilization_pct,std_resource_utilization_pct,min_resource_utilization_pct,max_resource_utilization_pct," +
+                "mean_cloudsim_makespan,median_cloudsim_makespan,std_cloudsim_makespan,min_cloudsim_makespan,max_cloudsim_makespan," +
+                "mean_execution_time_ms,improvement_over_pso_pct,improvement_over_ga_pct";
 
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write(header);
             writer.newLine();
-            for (GroupStats gs : statsList) {
-                String row = String.format("%s,%d,%d,%d,%d,%s,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f",
+
+            for (GroupStats gs : stats) {
+                String row = String.format(
+                        "%s,%d,%d,%d,%d,%s,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f",
                         gs.workloadType,
                         gs.scenarioId,
                         gs.taskCount,
@@ -251,6 +326,10 @@ public class ExperimentAnalyzer {
                         gs.stdAnalyticalMakespan,
                         gs.minAnalyticalMakespan,
                         gs.maxAnalyticalMakespan,
+                        gs.meanAnalyticalResourceUtilization,
+                        gs.stdAnalyticalResourceUtilization,
+                        gs.minAnalyticalResourceUtilization,
+                        gs.maxAnalyticalResourceUtilization,
                         gs.meanCloudSimMakespan,
                         gs.medianCloudSimMakespan,
                         gs.stdCloudSimMakespan,
@@ -265,57 +344,27 @@ public class ExperimentAnalyzer {
         }
     }
 
-    private static void printSummaryTable(Iterable<GroupStats> statsList) {
-        System.out.println("\n===========================================================================================================================================");
-        System.out.println("                                                   EXPERIMENTAL SUMMARY STATISTICS                                                         ");
-        System.out.println("===========================================================================================================================================");
-        System.out.printf("%-7s | %-4s | %-5s | %-5s | %-12s | %-12s | %-12s | %-10s | %-10s | %-10s%n",
-                "Workload", "Scen", "Tasks", "Iter", "Algorithm", "Mean M-Span", "CloudSim M-Span", "Std Dev", "Exec (ms)", "Imprv vs PSO");
-        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------");
+    private static void printSummaryTable(Iterable<GroupStats> stats) {
+        System.out.println("\n" + "=".repeat(120));
+        System.out.println("                                EXPERIMENT EXECUTION SUMMARY TABLE");
+        System.out.println("=".repeat(120));
+        System.out.printf("%-7s | %-4s | %-5s | %-5s | %-12s | %-11s | %-8s | %-11s | %-8s | %-10s%n",
+                "Workld", "Scen", "Tasks", "Iters", "Algorithm", "Mean Makesp", "Std Dev", "Res Util(%)", "Runtime", "vs PSO (%)");
+        System.out.println("-".repeat(120));
 
-        for (GroupStats gs : statsList) {
-            System.out.printf("%-7s | %-4d | %-5d | %-5d | %-12s | %12.4f | %15.4f | %10.4f | %10.2f | %11.2f%%%n",
+        for (GroupStats gs : stats) {
+            System.out.printf("%-7s | %-4d | %-5d | %-5d | %-12s | %11.3f | %8.3f | %10.2f%% | %6.1f ms | %+8.2f%%%n",
                     gs.workloadType,
                     gs.scenarioId,
                     gs.taskCount,
                     gs.iterations,
                     gs.algorithm,
                     gs.meanAnalyticalMakespan,
-                    gs.meanCloudSimMakespan,
                     gs.stdAnalyticalMakespan,
+                    gs.meanAnalyticalResourceUtilization,
                     gs.meanExecutionTimeMs,
                     gs.improvementOverPsoPct);
         }
-        System.out.println("===========================================================================================================================================\n");
-    }
-
-    private static List<Row> readRawRows(Path csv) throws IOException {
-        List<Row> rows = new ArrayList<Row>();
-        try (BufferedReader reader = Files.newBufferedReader(csv, StandardCharsets.UTF_8)) {
-            String header = reader.readLine(); // skip header
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split(",", -1);
-                if (parts.length < 12) continue;
-
-                Row r = new Row();
-                r.algorithm = parts[0].trim();
-                r.scenarioId = Integer.parseInt(parts[1].trim());
-                r.workloadType = parts[2].trim();
-                r.taskCount = Integer.parseInt(parts[3].trim());
-                r.vmCount = Integer.parseInt(parts[4].trim());
-                r.iterations = Integer.parseInt(parts[5].trim());
-                r.trialNumber = Integer.parseInt(parts[6].trim());
-                r.seed = Long.parseLong(parts[7].trim());
-                r.analyticalMakespan = Double.parseDouble(parts[8].trim());
-                r.cloudSimMakespan = Double.parseDouble(parts[9].trim());
-                r.executionTimeMs = Long.parseLong(parts[10].trim());
-                r.status = parts[11].trim();
-                r.errorDetails = parts.length > 12 ? parts[12].trim() : "";
-                rows.add(r);
-            }
-        }
-        return rows;
+        System.out.println("=".repeat(120));
     }
 }

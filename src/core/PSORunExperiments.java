@@ -8,7 +8,7 @@ public class PSORunExperiments {
 
     public static void main(String[] args) throws Exception {
 
-        int vmCount = 5;
+        int vmCount = 10; // Table 1: 10 VMs
         SchedulingAlgorithm pso = new ParticleSwarmScheduler();
 
         List<ExperimentRunner.TrialResult> allResults =

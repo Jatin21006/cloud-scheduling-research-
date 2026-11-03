@@ -9,13 +9,15 @@ public class ExperimentRunnerTest {
 		RecordingAlgorithm fiftyTaskAlgorithm = new RecordingAlgorithm();
 		List<ExperimentRunner.TrialResult> fiftyTaskResults = new ExperimentRunner(
 				fiftyTaskAlgorithm, fiftyTaskScenario, 2).run();
-		assertResults(fiftyTaskResults, fiftyTaskScenario, fiftyTaskAlgorithm, 7.5);
+		// 50 tasks of 300 MI on 2 VMs @ 100 MIPS each = 25 tasks * 300 / 100 = 75.0 s
+		assertResults(fiftyTaskResults, fiftyTaskScenario, fiftyTaskAlgorithm, 75.0);
 
 		ScenarioConfiguration oneHundredTaskScenario = PaperScenarios.all().get(1);
 		RecordingAlgorithm oneHundredTaskAlgorithm = new RecordingAlgorithm();
 		List<ExperimentRunner.TrialResult> oneHundredTaskResults = new ExperimentRunner(
 				oneHundredTaskAlgorithm, oneHundredTaskScenario, 2).run();
-		assertResults(oneHundredTaskResults, oneHundredTaskScenario, oneHundredTaskAlgorithm, 15.0);
+		// 100 tasks of 300 MI on 2 VMs @ 100 MIPS each = 50 tasks * 300 / 100 = 150.0 s
+		assertResults(oneHundredTaskResults, oneHundredTaskScenario, oneHundredTaskAlgorithm, 150.0);
 
 		System.out.println("50-task scenario runs 10 trials: PASS");
 		System.out.println("100-task scenario runs 10 trials: PASS");
@@ -43,7 +45,8 @@ public class ExperimentRunnerTest {
 					|| result.getSeed() != trialIndex
 					|| !result.getAlgorithmName().equals("RecordingAlgorithm")
 					|| Math.abs(result.getMakespan() - expectedMakespan) > 0.0000001) {
-				throw new AssertionError("Runner result does not match the scenario contract");
+				throw new AssertionError("Runner result does not match the scenario contract: expected "
+						+ expectedMakespan + " but got " + result.getMakespan());
 			}
 		}
 	}

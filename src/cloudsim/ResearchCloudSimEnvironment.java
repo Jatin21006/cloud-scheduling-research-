@@ -26,14 +26,13 @@ import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
 public class ResearchCloudSimEnvironment {
 
-	private static final int VM_COUNT = 5;
+	private static final int VM_COUNT = 10;
 	private static final int VM_RAM_MB = 1024;
 	private static final long VM_STORAGE_MB = 10 * 1024;
 	private static final long VM_BANDWIDTH = 1000;
 
-	// Datacenter, Host, and VM processing speeds are fixed at 1,000 MIPS per PE,
-	// maintaining exact consistency with FitnessEvaluator and CloudSimScheduleAdapter.
-	private static final int VM_AND_HOST_MIPS = 1000;
+	// Datacenter total 1000 MIPS across 10 VMs = 100 MIPS per VM
+	private static final int VM_AND_HOST_MIPS = 100;
 
 	public static void main(String[] args) {
 		try {
@@ -105,42 +104,26 @@ public class ResearchCloudSimEnvironment {
 	}
 
 	private static List<Cloudlet> createCloudlets(int userId) {
-		UtilizationModel utilizationModel = new UtilizationModelFull();
+		UtilizationModel model = new UtilizationModelFull();
 		List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
-		cloudlets.add(new Cloudlet(0, 300, 1, 300, 300, utilizationModel, utilizationModel, utilizationModel));
-		cloudlets.add(new Cloudlet(1, 300, 1, 300, 300, utilizationModel, utilizationModel, utilizationModel));
-		cloudlets.add(new Cloudlet(2, 300, 1, 300, 300, utilizationModel, utilizationModel, utilizationModel));
-		cloudlets.add(new Cloudlet(3, 300, 1, 300, 300, utilizationModel, utilizationModel, utilizationModel));
-		cloudlets.add(new Cloudlet(4, 300, 1, 300, 300, utilizationModel, utilizationModel, utilizationModel));
-		for (Cloudlet cloudlet : cloudlets) {
+		for (int i = 0; i < 5; i++) {
+			Cloudlet cloudlet = new Cloudlet(i, 300, 1, 300, 300, model, model, model);
 			cloudlet.setUserId(userId);
+			cloudlets.add(cloudlet);
 		}
 		return cloudlets;
 	}
 
 	private static void printEnvironment(Datacenter datacenter, List<Vm> vms) {
-		System.out.println("Datacenters: " + (datacenter == null ? 0 : 1));
-		System.out.println("Hosts: 1");
-		System.out.println("VMs: " + vms.size());
-		for (Vm vm : vms) {
-			System.out.println("VM " + vm.getId()
-					+ ": RAM=" + vm.getRam() + " MB"
-					+ ", storage=" + vm.getSize() + " MB"
-					+ ", bandwidth=" + vm.getBw()
-					+ ", scheduling=" + vm.getCloudletScheduler().getClass().getSimpleName());
-		}
+		Log.printLine("Datacenter: " + datacenter.getName());
+		Log.printLine("Configured VMs: " + vms.size());
 	}
 
 	private static void printCloudlets(List<Cloudlet> cloudlets) {
-		double makespan = 0.0;
 		for (Cloudlet cloudlet : cloudlets) {
-			System.out.println("Cloudlet " + cloudlet.getCloudletId()
-					+ ", VM=" + cloudlet.getVmId()
-					+ ", finish time=" + cloudlet.getFinishTime());
-			if (cloudlet.getFinishTime() > makespan) {
-				makespan = cloudlet.getFinishTime();
-			}
+			Log.printLine("Cloudlet " + cloudlet.getCloudletId()
+					+ " finished on VM " + cloudlet.getVmId()
+					+ " at " + cloudlet.getFinishTime());
 		}
-		System.out.println("Makespan: " + makespan);
 	}
 }

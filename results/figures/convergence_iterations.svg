@@ -40,38 +40,38 @@
 <text x="648.0" y="380" class="label" text-anchor="middle" font-weight="700">100 Iterations</text>
 <line x1="70" y1="360" x2="750" y2="360" class="axis" />
 <line x1="70" y1="60" x2="70" y2="360" class="axis" />
-<polyline points="172.0,326.6666666666667 410.0,326.6666666666667 648.0,326.6666666666667" fill="none" stroke="#2563EB" stroke-width="2.5"  opacity="0.85" />
-<circle cx="172.0" cy="326.6666666666667" r="4.5" fill="#2563EB" />
-<circle cx="410.0" cy="326.6666666666667" r="4.5" fill="#2563EB" />
-<circle cx="648.0" cy="326.6666666666667" r="4.5" fill="#2563EB" />
-<polyline points="172.0,308.6666666666667 410.0,318.66666666666663 648.0,324.6666666666667" fill="none" stroke="#DC2626" stroke-width="2.5"  opacity="0.85" />
-<circle cx="172.0" cy="308.6666666666667" r="4.5" fill="#DC2626" />
-<circle cx="410.0" cy="318.66666666666663" r="4.5" fill="#DC2626" />
-<circle cx="648.0" cy="324.6666666666667" r="4.5" fill="#DC2626" />
-<polyline points="172.0,324.6666666666667 410.0,326.6666666666667 648.0,326.6666666666667" fill="none" stroke="#059669" stroke-width="2.5"  opacity="0.85" />
-<circle cx="172.0" cy="324.6666666666667" r="4.5" fill="#059669" />
-<circle cx="410.0" cy="326.6666666666667" r="4.5" fill="#059669" />
-<circle cx="648.0" cy="326.6666666666667" r="4.5" fill="#059669" />
-<polyline points="172.0,314.66666666666663 410.0,318.66666666666663 648.0,320.6666666666667" fill="none" stroke="#7C3AED" stroke-width="2.5"  opacity="0.85" />
-<circle cx="172.0" cy="314.66666666666663" r="4.5" fill="#7C3AED" />
-<circle cx="410.0" cy="318.66666666666663" r="4.5" fill="#7C3AED" />
-<circle cx="648.0" cy="320.6666666666667" r="4.5" fill="#7C3AED" />
-<polyline points="172.0,124.66666666666666 410.0,126.66666666666666 648.0,126.66666666666666" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
-<circle cx="172.0" cy="124.66666666666666" r="4.5" fill="#2563EB" />
-<circle cx="410.0" cy="126.66666666666666" r="4.5" fill="#2563EB" />
-<circle cx="648.0" cy="126.66666666666666" r="4.5" fill="#2563EB" />
-<polyline points="172.0,108.66666666666669 410.0,110.66666666666666 648.0,110.66666666666666" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
-<circle cx="172.0" cy="108.66666666666669" r="4.5" fill="#DC2626" />
-<circle cx="410.0" cy="110.66666666666666" r="4.5" fill="#DC2626" />
-<circle cx="648.0" cy="110.66666666666666" r="4.5" fill="#DC2626" />
-<polyline points="172.0,116.66666666666663 410.0,126.66666666666666 648.0,126.66666666666666" fill="none" stroke="#059669" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
-<circle cx="172.0" cy="116.66666666666663" r="4.5" fill="#059669" />
-<circle cx="410.0" cy="126.66666666666666" r="4.5" fill="#059669" />
-<circle cx="648.0" cy="126.66666666666666" r="4.5" fill="#059669" />
-<polyline points="172.0,108.66666666666669 410.0,110.66666666666666 648.0,116.66666666666663" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
-<circle cx="172.0" cy="108.66666666666669" r="4.5" fill="#7C3AED" />
-<circle cx="410.0" cy="110.66666666666666" r="4.5" fill="#7C3AED" />
-<circle cx="648.0" cy="116.66666666666663" r="4.5" fill="#7C3AED" />
+<polyline points="172.0,-653.3333333333334 410.0,-593.3333333333334 648.0,-553.3333333333333" fill="none" stroke="#2563EB" stroke-width="2.5"  opacity="0.85" />
+<circle cx="172.0" cy="-653.3333333333334" r="4.5" fill="#2563EB" />
+<circle cx="410.0" cy="-593.3333333333334" r="4.5" fill="#2563EB" />
+<circle cx="648.0" cy="-553.3333333333333" r="4.5" fill="#2563EB" />
+<polyline points="172.0,-693.3333333333333 410.0,-673.3333333333335 648.0,-673.3333333333335" fill="none" stroke="#DC2626" stroke-width="2.5"  opacity="0.85" />
+<circle cx="172.0" cy="-693.3333333333333" r="4.5" fill="#DC2626" />
+<circle cx="410.0" cy="-673.3333333333335" r="4.5" fill="#DC2626" />
+<circle cx="648.0" cy="-673.3333333333335" r="4.5" fill="#DC2626" />
+<polyline points="172.0,-673.3333333333335 410.0,-653.3333333333334 648.0,-633.3333333333333" fill="none" stroke="#059669" stroke-width="2.5"  opacity="0.85" />
+<circle cx="172.0" cy="-673.3333333333335" r="4.5" fill="#059669" />
+<circle cx="410.0" cy="-653.3333333333334" r="4.5" fill="#059669" />
+<circle cx="648.0" cy="-633.3333333333333" r="4.5" fill="#059669" />
+<polyline points="172.0,-673.3333333333335 410.0,-673.3333333333335 648.0,-673.3333333333335" fill="none" stroke="#7C3AED" stroke-width="2.5"  opacity="0.85" />
+<circle cx="172.0" cy="-673.3333333333335" r="4.5" fill="#7C3AED" />
+<circle cx="410.0" cy="-673.3333333333335" r="4.5" fill="#7C3AED" />
+<circle cx="648.0" cy="-673.3333333333335" r="4.5" fill="#7C3AED" />
+<polyline points="172.0,-1673.3333333333333 410.0,-1653.3333333333337 648.0,-1633.3333333333333" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
+<circle cx="172.0" cy="-1673.3333333333333" r="4.5" fill="#2563EB" />
+<circle cx="410.0" cy="-1653.3333333333337" r="4.5" fill="#2563EB" />
+<circle cx="648.0" cy="-1633.3333333333333" r="4.5" fill="#2563EB" />
+<polyline points="172.0,-1813.3333333333335 410.0,-1773.333333333333 648.0,-1733.3333333333335" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
+<circle cx="172.0" cy="-1813.3333333333335" r="4.5" fill="#DC2626" />
+<circle cx="410.0" cy="-1773.333333333333" r="4.5" fill="#DC2626" />
+<circle cx="648.0" cy="-1733.3333333333335" r="4.5" fill="#DC2626" />
+<polyline points="172.0,-1713.3333333333335 410.0,-1673.3333333333333 648.0,-1613.3333333333335" fill="none" stroke="#059669" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
+<circle cx="172.0" cy="-1713.3333333333335" r="4.5" fill="#059669" />
+<circle cx="410.0" cy="-1673.3333333333333" r="4.5" fill="#059669" />
+<circle cx="648.0" cy="-1613.3333333333335" r="4.5" fill="#059669" />
+<polyline points="172.0,-1713.3333333333335 410.0,-1673.3333333333333 648.0,-1653.3333333333337" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="5,5" opacity="0.85" />
+<circle cx="172.0" cy="-1713.3333333333335" r="4.5" fill="#7C3AED" />
+<circle cx="410.0" cy="-1673.3333333333333" r="4.5" fill="#7C3AED" />
+<circle cx="648.0" cy="-1653.3333333333337" r="4.5" fill="#7C3AED" />
 <text x="90" y="85" class="label" font-weight="600">— Solid: 50 Tasks (Ideal: 3.0s)</text>
 <text x="90" y="102" class="label" font-weight="600">--- Dashed: 100 Tasks (Ideal: 6.0s)</text>
 </svg>
